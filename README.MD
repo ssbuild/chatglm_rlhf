@@ -7,10 +7,10 @@
     pip install --pre -U deep_training>=0.1.5
 
 
-## 2.更新详情
+## 更新详情
 - [deep_training](https://github.com/ssbuild/deep_training)
 
-## 3.深度学习常规任务例子
+## 深度学习常规任务例子
 
 - [pytorch-task-example](https://github.com/ssbuild/pytorch-task-example)
 - [tf-task-example](https://github.com/ssbuild/tf-task-example)
@@ -20,12 +20,10 @@
 
 
 
-## 4. 预训练模型下载，大小尺寸可自行选择
-    
-- [bloom预训练模型](https://huggingface.co/bigscience)
-- [bloom第三方中文训练模型](https://huggingface.co/Langboat/bloom-6b4-zh)  # 注意 需要修改tokenizer_config.json BloomTokenizer -> BloomTokenizerFast
-- [opt预训练模型](https://huggingface.co/facebook)
-- [llama预训练模型](https://huggingface.co/decapoda-research)
+## 预训练模型权重
+- [chatglm-6b](https://huggingface.co/THUDM/chatglm-6b)
+- [chatglm-6b-int8](https://huggingface.co/THUDM/chatglm-6b-int8)
+- [chatglm-6b-int4](https://huggingface.co/THUDM/chatglm-6b-int4)
 
 
 ## 数据示例
