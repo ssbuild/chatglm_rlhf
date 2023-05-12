@@ -109,6 +109,6 @@ def get_deepspeed_config():
     # 是否开启deepspeed
     if not enable_deepspeed:
         return None
-    with open('./deepspeed.json', mode='r', encoding='utf-8') as f:
+    with open(os.path.join(os.path.dirname(__file__),'deepspeed.json'), mode='r', encoding='utf-8') as f:
         deepspeed_config = json.loads(f.read())
     return deepspeed_config
