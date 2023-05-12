@@ -16,10 +16,9 @@ from torch.optim import AdamW
 from transformers import PreTrainedModel, HfArgumentParser
 from transformers.utils import ModelOutput
 from config import reward_config
-from deep_training.nlp.models.rl.modeling import AutoModelForCausalPrefixLMWithValueHead, CausalPrefixLMOutputWithValue, \
-    ChatglmModelForCausalPrefixLMWithValueHead
-from deep_training.nlp.models.chatglm.tokenization import ChatGLMTokenizer
+from deep_training.nlp.models.rl.modeling import ChatglmModelForCausalPrefixLMWithValueHead
 from deep_training.nlp.models.chatglm import ChatGLMForConditionalGeneration,ChatGLMConfig
+from models.tokenization_chatglm import ChatGLMTokenizer
 
 #如果显卡支持int8 可以开启 ， 需安装依赖 pip install bitsandbytes
 load_in_8bit = False

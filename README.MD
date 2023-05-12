@@ -1,21 +1,21 @@
 
-## 安装
-    pip install --pre -U deep_training>=0.1.5
+## install
+    pip install -U deep_training>=0.1.5
     python >= 3.10
 
 
-## 更新详情
+## update information
 - [deep_training](https://github.com/ssbuild/deep_training)
 
 
 
-## 预训练模型权重
+## weight
 - [chatglm-6b](https://huggingface.co/THUDM/chatglm-6b)
 - [chatglm-6b-int8](https://huggingface.co/THUDM/chatglm-6b-int8)
 - [chatglm-6b-int4](https://huggingface.co/THUDM/chatglm-6b-int4)
 
 
-## 数据示例
+## data sample
 
 ```json
 {
