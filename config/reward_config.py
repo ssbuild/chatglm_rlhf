@@ -46,7 +46,7 @@ train_info_args = {
     'model_type': 'bloom',
     # 预训练模型路径 , 从0训练，则置空
     'model_name_or_path': '/data/nlp/pre_models/torch/chatglm/chatglm-6b',
-    'config_name': '../model_config/config.json',
+    'config_name': '../models/config/config.json',
     'tokenizer_name': '/data/nlp/pre_models/torch/chatglm/chatglm-6b',
 
     'convert_onnx': False, # 转换onnx模型

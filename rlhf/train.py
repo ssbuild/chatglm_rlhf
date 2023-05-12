@@ -3,7 +3,6 @@
 import copy
 import logging
 import math
-
 import torch
 from deep_training.data_helper import ModelArguments, DataArguments, TrainingArguments
 from deep_training.utils.trainer import SimpleModelCheckpointFabric
@@ -130,10 +129,8 @@ if __name__ == '__main__':
         original_rewards = get_reward(original_samples)
         return rewards - original_rewards
 
-    pl_model = MyPPOTransformer(config=config,
-                                model_args=model_args,
-                                training_args=training_args,
-                                lora_args=lora_args,ppo_args=ppo_args)
+    pl_model = MyPPOTransformer(config=config,model_args=model_args,training_args=training_args,lora_args=lora_args,ppo_args=ppo_args,
+                                load_in_8bit=load_in_8bit,device_map={"": trainer.fabric.local_rank} if trainer.world_size > 1 else "auto")
     if not load_in_8bit:
         pl_model.half()
 
