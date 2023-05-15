@@ -1,0 +1,4 @@
+deep_training>=0.1.5
+bitsandbytes
+transformers>=4.28
+datasets
