@@ -117,7 +117,7 @@ if __name__ == '__main__':
                 })
                 out.extend(rewards)
             return torch.hstack(out)
-    
+
         def reward_fn(samples, prompts, org_labels, **kwargs):
             org_labels = [str(l, encoding='utf-8') for l in org_labels]
             samples = [s + tokenizer.eos_token for s in samples]
@@ -168,7 +168,8 @@ if __name__ == '__main__':
                         train_loader=train_datasets,
                         tokenizer=tokenizer,
                         reward_fn=reward_fn,
-                        ppo_config=ppo_args
+                        ppo_config=ppo_args,
+                        stop_sequences=["Human:", "human:", "Assistant:", "assistant:"],
                         )
 
     else:
