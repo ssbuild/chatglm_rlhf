@@ -12,7 +12,7 @@ lora_info_args = {
     'with_lora': True,  # 是否启用lora模块
     'lora_type': 'lora',
     'r': 8,
-    'target_dtype': 32, #ppo 半精度容易nan
+    'target_dtype': None, 
     'target_modules': ['query_key_value'],
     'lora_alpha': 32,
     'lora_dropout': 0.1,

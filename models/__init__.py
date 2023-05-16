@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # @Time:  11:30
 # @Author: tk
+import torch
 
 from models.chatglm_model import *
 
@@ -78,8 +79,9 @@ class MyPPOTransformer(MyChatglmModelForCausalPrefixLMWithValueHead,PPOModelLoss
         return outputs
 
     def compute_loss(self, *args, **inputs):
+        # with torch.autocast(device_type="cuda", dtype=torch.bfloat16):
+        #     return self.forward_ppo_loss(*args, **inputs)
         return self.forward_ppo_loss(*args, **inputs)
-
 
     def forward_logits_values(self,*args,**kwargs):
         return self.model.forward(*args,**kwargs)
