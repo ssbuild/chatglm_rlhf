@@ -76,6 +76,7 @@ if __name__ == '__main__':
     tokenizer, config, _, _ = dataHelper.load_tokenizer_and_config(tokenizer_class_name=ChatGLMTokenizer,
                                                                    config_class_name=ChatGLMConfig)
     assert tokenizer.eos_token_id == 130005
+    config.precision = 32
 
     # 额外参数
     # checkpoint_callback.tokenizer = tokenizer
