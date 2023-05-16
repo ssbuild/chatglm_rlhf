@@ -3,6 +3,7 @@
 # @Author  : tk
 # @FileName: reward_config
 import json
+import os
 
 # 默认禁用lora 相关模块 , lora 和 adalora 只能同时启用一个
 lora_info_args = {
