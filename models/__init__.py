@@ -61,6 +61,11 @@ class MyPPOTransformer(MyChatglmModelForCausalPrefixLMWithValueHead,PPOModelLoss
                           eps=training_args.adam_epsilon,
                           betas=training_args.optimizer_betas,
                           weight_decay=training_args.weight_decay)
+
+        # optimizer = Lion(p, lr=training_args.learning_rate,
+        #                   betas=training_args.optimizer_betas,
+        #                   weight_decay=training_args.weight_decay)
+
         return optimizer
 
 
