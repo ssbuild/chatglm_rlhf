@@ -93,11 +93,13 @@ def load_reward_model(model_dir) ->MyRewardTransformer:
     model_args, training_args, data_args, lora_args = parser.parse_dict(reward_config.train_info_args)
     lora_args = lora_args.config
     config = ChatGLMConfig.from_pretrained(model_dir)
+    if lora_args is not None:
+        lora_args = LoraArguments.from_pretrained(model_dir)
     # 加载权重
-    lora_args = LoraArguments.from_pretrained(model_dir)
     pl_module = MyRewardTransformer(config=config,model_args=model_args,training_args=training_args,lora_args=lora_args)
-    # 加载lora权重
-    pl_module.backbone.from_pretrained(pl_module.backbone.model, pretrained_model_name_or_path=model_dir,lora_config=lora_args)
+    if lora_args is not None:
+        # 加载lora权重
+        pl_module.backbone.from_pretrained(pl_module.backbone.model, pretrained_model_name_or_path=model_dir,lora_config=lora_args)
     pl_module.eval()
     pl_module.requires_grad_(False)
     return pl_module
@@ -108,11 +110,12 @@ def load_ref_model(lora_model_dir,ref_train_info_args) ->MyPPOTransformer:
     model_args, training_args, data_args, lora_args = parser.parse_dict(ref_train_info_args)
     lora_args = lora_args.config
     config = ChatGLMConfig.from_pretrained(lora_model_dir)
-    # 加载权重
-    lora_args = LoraArguments.from_pretrained(lora_model_dir)
+    if lora_args is not None:
+        lora_args = LoraArguments.from_pretrained(lora_model_dir)
     pl_module = MyPPOTransformer(config=config,model_args=model_args,training_args=training_args,lora_args=lora_args)
-    # 二次加载权重
-    pl_module.backbone.from_pretrained(pl_module.backbone.model, pretrained_model_name_or_path=lora_model_dir,lora_config=lora_args)
+    if lora_args is not None:
+        # 加载lora权重
+        pl_module.backbone.from_pretrained(pl_module.backbone.model, pretrained_model_name_or_path=lora_model_dir,lora_config=lora_args)
     pl_module.eval()
     pl_module.requires_grad_(False)
     return pl_module
