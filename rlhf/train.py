@@ -145,7 +145,7 @@ if __name__ == '__main__':
     # 加载lora sft权重
     #pl_model.backbone.from_pretrained(pl_model.backbone.model, pretrained_model_name_or_path='./best_ckpt')
 
-    # 如果 Trainer.precision = '16-mixed',  # 混合精度
+    # 如果使用Trainer.precision = '16-mixed', 需要pl_model.float() 并且注释掉如果使用Trainer.max_grad_norm  # 混合精度
     pl_model.float()
 
     #pl_model.bfloat16()
