@@ -70,7 +70,7 @@ if __name__ == '__main__':
         accumulate_grad_batches=training_args.gradient_accumulation_steps,
         max_grad_norm=training_args.max_grad_norm,
         strategy=strategy,
-        # precision='bf16',# 混合精度, 需显卡支持
+        precision='16-mixed',# 混合精度
     )
 
     dataHelper = NN_DataHelper(model_args, training_args, data_args,ppo_args=ppo_args)
@@ -145,7 +145,7 @@ if __name__ == '__main__':
     # 加载lora sft权重
     #pl_model.backbone.from_pretrained(pl_model.backbone.model, pretrained_model_name_or_path='./best_ckpt')
 
-    pl_model.bfloat16()
+    pl_model.float()
 
     # pl_ref_model = load_ref_model('../reward/best_ckpt')
     pl_ref_model = copy.deepcopy(pl_model)
