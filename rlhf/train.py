@@ -68,6 +68,7 @@ if __name__ == '__main__':
         devices=data_args.devices,
         checkpoint_dir=data_args.output_dir,
         accumulate_grad_batches=training_args.gradient_accumulation_steps,
+        max_grad_norm=training_args.max_grad_norm,
         strategy=strategy,
         # precision='bf16',# 混合精度, 需显卡支持
     )

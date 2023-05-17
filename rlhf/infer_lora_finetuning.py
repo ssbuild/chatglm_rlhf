@@ -20,7 +20,7 @@ if __name__ == '__main__':
     assert tokenizer.eos_token_id == 130005
 
     ckpt_dir = './best_ckpt'
-    config = ChatGLMTokenizer.from_pretrained(ckpt_dir)
+    config = ChatGLMConfig.from_pretrained(ckpt_dir)
     lora_args = LoraArguments.from_pretrained(ckpt_dir)
 
     assert lora_args.inference_mode == True
@@ -43,7 +43,7 @@ if __name__ == '__main__':
         model = pl_model.get_llm_model()
 
         text = "哪些食物对糖尿病患者有好处?"
-        response, history = model.chat(model, query=text, tokenizer=tokenizer, max_length=2048,
+        response, history = model.chat(query=text, tokenizer=tokenizer, max_length=2048,
                                           eos_token_id=config.eos_token_id,
                                           do_sample=True, top_p=0.7, temperature=0.95, )
         print('input', text)
