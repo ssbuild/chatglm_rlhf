@@ -120,6 +120,18 @@ if __name__ == '__main__':
 
     pl_model = MyRewardTransformer(config=config, model_args=model_args, training_args=training_args, lora_args=lora_args,
                                    load_in_8bit=load_in_8bit,device_map={"": trainer.local_rank} if trainer.world_size > 1 else "auto")
+
+    # 加载 三种 不同的 sft 权重
+    # 加载 p-tuning-v2 sft权重
+    # pl_model.get_llm_model().load_state_dict(torch.load('pytorch_model_sft_ptv2.bin'), strict=False)
+
+    # 加载微调sft权重
+    # pl_model.get_llm_model().load_state_dict(torch.load('pytorch_model_sft.bin'), strict=False)
+
+    # 加载lora sft权重
+    # pl_model.backbone.from_pretrained(pl_model.backbone.model, pretrained_model_name_or_path='./best_ckpt')
+
+
     if not load_in_8bit:
         pl_model.half()
 
