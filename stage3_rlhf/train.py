@@ -167,8 +167,7 @@ if __name__ == '__main__':
     # pl_model.load_sft_weight('./best_ckpt/best.pt',is_trainable=True)
 
     # pl_model.half()
-    #
-    # pl_model.load_sft_weight('./best_ckpt/best.pt')
+
 
     if config.quantization_bit != 0 or global_args["load_in_8bit"]:
         pl_model.half()
