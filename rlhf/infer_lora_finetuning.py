@@ -28,17 +28,16 @@ if __name__ == '__main__':
     pl_model = MyPPOTransformer(config=config, model_args=model_args, training_args=training_args,lora_args=lora_args,
                                 load_in_8bit=load_in_8bit, device_map="auto")
     # 加载lora权重
-    pl_model.backbone.from_pretrained(pl_model.backbone.model, pretrained_model_name_or_path=ckpt_dir, lora_config = lora_args)
+    pl_model.load_sft_weight(ckpt_dir)
     if load_in_8bit:
         pl_model.eval().cuda()
     else:
         pl_model.eval().half().cuda()
 
     enable_merge_weight = False
-
     if enable_merge_weight:
         # 合并lora 权重 保存
-        pl_model.save_pretrained_merge_lora(os.path.join(ckpt_dir, 'pytorch_model_merge.bin'))
+        pl_model.save_sft_weight(os.path.join(ckpt_dir, 'pytorch_model_merge.bin'),merge_lora_weight=True)
     else:
         model = pl_model.get_llm_model()
 
