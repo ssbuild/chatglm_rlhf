@@ -21,9 +21,6 @@ from deep_training.nlp.models.chatglm import ChatGLMForConditionalGeneration,Cha
 from models.tokenization_chatglm import ChatGLMTokenizer
 from deep_training.nlp.optimizer.lion import Lion
 
-#如果显卡支持int8 可以开启 ， 需安装依赖 pip install bitsandbytes
-load_in_8bit = False
-
 
 class MyChatGLMForConditionalGeneration(ChatGLMForConditionalGeneration):
     def __init__(self, *args,**kwargs):

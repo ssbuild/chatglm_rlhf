@@ -10,10 +10,9 @@ from lightning import Trainer
 from lightning.pytorch.callbacks import ModelCheckpoint, LearningRateMonitor
 from lightning.pytorch.strategies import DeepSpeedStrategy
 from transformers import HfArgumentParser
-
-from config.reward_config import global_args
 from data_utils import NN_DataHelper, train_info_args, get_deepspeed_config
-from models import MyRewardTransformer, load_in_8bit,ChatGLMTokenizer,ChatGLMConfig
+from models import MyRewardTransformer,ChatGLMTokenizer,ChatGLMConfig
+from config.reward_config import global_args
 
 
 class MySimpleModelCheckpoint(SimpleModelCheckpoint):
@@ -140,7 +139,7 @@ if __name__ == '__main__':
         dataHelper.make_dataset_with_args(data_args.test_file, mode='test')
 
     pl_model = MyRewardTransformer(config=config, model_args=model_args, training_args=training_args, lora_args=lora_args,
-                                   load_in_8bit=load_in_8bit,device_map={"": trainer.local_rank} if trainer.world_size > 1 else "auto")
+                                   load_in_8bit=global_args["load_in_8bit"],device_map={"": trainer.local_rank} if trainer.world_size > 1 else "auto")
 
     # 恢复权重继续训练
     # pl_model.load_sft_weight('./best_ckpt/best.pt',is_trainable=True)

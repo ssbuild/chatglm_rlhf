@@ -5,22 +5,20 @@ import sys
 sys.path.append("..")
 import os
 import re
-from collections import OrderedDict
-
-import torch
 from deep_training.data_helper import ModelArguments, TrainingArguments, DataArguments
 from transformers import HfArgumentParser,PreTrainedTokenizer
 
 from config.rlhf_config import get_deepspeed_config
 from data_utils import train_info_args, NN_DataHelper
-from models import MyPPOTransformer, load_in_8bit,LoraArguments,PPOArguments,ChatGLMTokenizer,ChatGLMConfig
+from models import MyPPOTransformer,ChatGLMTokenizer,ChatGLMConfig
+
 
 deep_config = get_deepspeed_config()
 
 if __name__ == '__main__':
     train_info_args['seed'] = None
-    parser = HfArgumentParser((ModelArguments, TrainingArguments, DataArguments, LoraArguments, PPOArguments))
-    model_args, _, data_args, _,_ = parser.parse_dict(train_info_args)
+    parser = HfArgumentParser((ModelArguments, DataArguments,))
+    model_args, data_args, = parser.parse_dict(train_info_args,allow_extra_keys=True)
 
     dataHelper = NN_DataHelper(model_args, None, data_args)
     tokenizer, _, _, _ = dataHelper.load_tokenizer_and_config(tokenizer_class_name=ChatGLMTokenizer,
@@ -55,10 +53,7 @@ if __name__ == '__main__':
 
 
 
-    if load_in_8bit:
-        pl_model.eval().cuda()
-    else:
-        pl_model.eval().half().cuda()
+    pl_model.eval().half().cuda()
 
 
     model = pl_model.get_llm_model()

@@ -3,13 +3,13 @@
 # @FileName: infer_lora_finetuning
 import sys
 sys.path.append("..")
-
 import os
 import torch
 from deep_training.data_helper import ModelArguments, TrainingArguments, DataArguments
 from transformers import HfArgumentParser,PreTrainedTokenizer
 from data_utils import train_info_args, NN_DataHelper
-from models import MyPPOTransformer, load_in_8bit,LoraArguments,PPOArguments,ChatGLMTokenizer,ChatGLMConfig
+from models import MyPPOTransformer,LoraArguments,PPOArguments,ChatGLMTokenizer,ChatGLMConfig
+from config.rlhf_config import global_args
 
 if __name__ == '__main__':
     train_info_args['seed'] = None
@@ -27,10 +27,10 @@ if __name__ == '__main__':
 
     assert lora_args.inference_mode == True
 
-    pl_model = MyPPOTransformer(config=config, model_args=model_args, lora_args=lora_args,load_in_8bit=load_in_8bit, device_map="auto")
+    pl_model = MyPPOTransformer(config=config, model_args=model_args, lora_args=lora_args,load_in_8bit=global_args["load_in_8bit"], device_map="auto")
     # 加载lora权重
     pl_model.load_sft_weight(ckpt_dir)
-    if load_in_8bit:
+    if global_args["load_in_8bit"]:
         pl_model.eval().cuda()
     else:
         pl_model.eval().half().cuda()

@@ -3,24 +3,22 @@
 import sys
 sys.path.append("..")
 
-import os
-import re
-from collections import OrderedDict
-import numpy as np
 import torch
+import numpy as np
 from deep_training.data_helper import ModelArguments, TrainingArguments, DataArguments
 from transformers import HfArgumentParser,PreTrainedTokenizer
 
 from config.reward_config import get_deepspeed_config
 from data_utils import train_info_args, NN_DataHelper
-from models import MyRewardTransformer, load_in_8bit,LoraArguments,ChatGLMConfig
+from models import MyRewardTransformer ,LoraArguments,ChatGLMConfig
+
 
 deep_config = get_deepspeed_config()
 
 if __name__ == '__main__':
     train_info_args['seed'] = None
-    parser = HfArgumentParser((ModelArguments, TrainingArguments, DataArguments, LoraArguments))
-    model_args, _, data_args, _ = parser.parse_dict(train_info_args)
+    parser = HfArgumentParser((ModelArguments, DataArguments))
+    model_args, data_args = parser.parse_dict(train_info_args,allow_extra_keys=True)
 
     tokenizer : PreTrainedTokenizer
     dataHelper = NN_DataHelper(model_args, None, data_args)
@@ -30,7 +28,7 @@ if __name__ == '__main__':
     config = ChatGLMConfig.from_pretrained(ckpt_dir)
 
 
-    pl_model = MyRewardTransformer(config=config, model_args=model_args, load_in_8bit=load_in_8bit, device_map="auto")
+    pl_model = MyRewardTransformer(config=config, model_args=model_args)
 
     if deep_config is None:
         train_weight = './best_ckpt/last-v3.ckpt'
@@ -53,10 +51,8 @@ if __name__ == '__main__':
     # 保存sft权重
     # pl_model.save_sft_weight('convert/pytorch_model_sft.bin')
 
-    if load_in_8bit:
-        pl_model.eval().cuda()
-    else:
-        pl_model.eval().half().cuda()
+
+    pl_model.eval().half().cuda()
 
 
     pl_model.requires_grad_(False)

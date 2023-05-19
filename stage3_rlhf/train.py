@@ -12,7 +12,7 @@ from transformers import HfArgumentParser
 from config.rlhf_config import global_args
 from data_utils import NN_DataHelper, train_info_args, get_deepspeed_config
 from models import MyPPOTransformer, LoraArguments, LoraConfig, PPOArguments, PPOConfig, load_reward_model, \
-    load_ref_model, load_in_8bit,ChatGLMTokenizer,ChatGLMConfig
+    load_ref_model,ChatGLMTokenizer,ChatGLMConfig
 from deep_training.nlp.rl.ppo.ppo_trainer import PPOTrainer
 
 deepspeed_config = get_deepspeed_config()
@@ -161,7 +161,7 @@ if __name__ == '__main__':
         reward_fn = None
 
     pl_model = MyPPOTransformer(config=config,model_args=model_args,training_args=training_args,lora_args=lora_args,ppo_args=ppo_args,
-                                load_in_8bit=load_in_8bit,device_map={"": trainer.fabric.local_rank} if trainer.world_size > 1 else "auto")
+                                load_in_8bit=global_args["load_in_8bit"],device_map={"": trainer.fabric.local_rank} if trainer.world_size > 1 else "auto")
 
     # 恢复权重继续训练
     # pl_model.load_sft_weight('./best_ckpt/best.pt',is_trainable=True)
