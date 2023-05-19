@@ -94,8 +94,8 @@ if __name__ == '__main__':
         gradient_clip_val=training_args.max_grad_norm,
         accumulate_grad_batches=training_args.gradient_accumulation_steps,
         num_sanity_val_steps=0,
-        strategy=strategy
-        # precision=16,#半精度
+        strategy=strategy,
+        precision=16,#半精度
     )
 
     dataHelper = NN_DataHelper(model_args, training_args, data_args)
@@ -132,45 +132,19 @@ if __name__ == '__main__':
     # pl_model.backbone.from_pretrained(pl_model.backbone.model, pretrained_model_name_or_path='./best_ckpt')
 
 
-    if not load_in_8bit:
-        pl_model.half()
+    # pl_model.half()
+    #
+    # pl_model.load_sft_weight('./best_ckpt/best.pt')
 
-    ckpt_path = './best_ckpt/best.pt'
-    if not data_args.convert_onnx:
-        #  只恢复权重 ， 不恢复步数和优化器 ，
-        #  如果想恢复步数， 修改 trainer.fit(pl_model, train_dataloaders=train_datasets，ckpt=ckpt_path)  注lora 当前不支持恢复步数。
-        # if os.path.exists(ckpt_path):
-        #     if  lora_args is None:
-        #         # 加载权重继续训练
-        #         pl_model = MyRewardTransformer.load_from_checkpoint(ckpt_path, config=config,model_args=model_args,training_args=training_args,lora_args=lora_args,
-        #                                                               load_in_8bit=load_in_8bit,device_map={"": trainer.local_rank} if trainer.world_size > 1 else "auto",
-        #                                                               strict=False)
-        #     else:
-        #         # 加载lora权重 继续训练  0.0.20版本支持lora 继续训练
-        #         pl_model.backbone.from_pretrained(pl_model.backbone.model, pretrained_model_name_or_path=ckpt_path,lora_config=lora_args,is_trainable=True,strict=False)
+    pl_model.float()
 
-        train_datasets = dataHelper.load_distributed_random_sampler(
-            dataHelper.train_files,
-            with_load_memory=True,
-            collate_fn=dataHelper.collate_fn,
-            batch_size=training_args.train_batch_size,
-            drop_last=True,  # 多卡建议扔掉
-            num_processes=trainer.world_size, process_index=trainer.global_rank)
+    train_datasets = dataHelper.load_distributed_random_sampler(
+        dataHelper.train_files,
+        with_load_memory=True,
+        collate_fn=dataHelper.collate_fn,
+        batch_size=training_args.train_batch_size,
+        drop_last=True,  # 多卡建议扔掉
+        num_processes=trainer.world_size, process_index=trainer.global_rank)
 
-        if train_datasets is not None:
-            trainer.fit(pl_model, train_dataloaders=train_datasets)
-
-    else:
-        if lora_args is None:
-            # 加载权重
-            pl_model = MyRewardTransformer.load_from_checkpoint(ckpt_path, config=config,model_args=model_args,training_args=training_args,lora_args=lora_args, strict=False)
-            model = pl_model.get_glm_model()
-            # 保存huggingface model
-            model.save_pretrained('huggingface_model', max_shard_size='10GB')
-        else:
-            # 加载权重
-            lora_args = LoraArguments.from_pretrained('./best_ckpt')
-            pl_module = MyRewardTransformer(config=config,model_args=model_args,training_args=training_args,lora_args=lora_args, strict=False)
-            # 加载lora权重
-            pl_module.backbone.from_pretrained(pl_module.backbone.model, pretrained_model_name_or_path='./best_ckpt',lora_config=lora_args)
-            model = pl_model.get_llm_model()
+    if train_datasets is not None:
+        trainer.fit(pl_model, train_dataloaders=train_datasets)

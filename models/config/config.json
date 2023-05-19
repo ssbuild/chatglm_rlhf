@@ -24,7 +24,7 @@
   "transformers_version": "4.23.1",
   "use_cache": true,
   "vocab_size": 130528,
-  "precision": 16,
+  "precision": null,
   "quantization_bit": 0,
   "pre_seq_len": null,
   "prefix_projection": false
