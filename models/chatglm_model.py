@@ -144,12 +144,12 @@ class MyRewardChatGlmLMHeadModel(MyTransformerChatGlmLMHeadModel):
 
 
 class MyChatglmModelForCausalPrefixLMWithValueHead(ChatglmModelForCausalPrefixLMWithValueHead):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args,up_sampling_score=False, **kwargs):
         # 如果显卡支持int8 可以开启 ， 需安装依赖 pip install bitsandbytes
         load_in_8bit = kwargs.get('load_in_8bit', False)
         if not load_in_8bit:
             kwargs.pop("device_map", None)
-        super(MyChatglmModelForCausalPrefixLMWithValueHead, self).__init__(*args, **kwargs)
+        super(MyChatglmModelForCausalPrefixLMWithValueHead, self).__init__(*args, up_sampling_score=up_sampling_score, **kwargs)
         self.set_model(self.from_pretrained(MyChatGLMForConditionalGeneration, *args, **kwargs))
 
         if load_in_8bit:
