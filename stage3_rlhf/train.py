@@ -6,7 +6,7 @@ import math
 import torch
 from deep_training.data_helper import ModelArguments, DataArguments, TrainingArguments
 from deep_training.utils.trainer import SimpleModelCheckpointFabric
-from lightning.pytorch.strategies import DeepSpeedStrategy
+from lightning.fabric.strategies import DeepSpeedStrategy
 from transformers import HfArgumentParser
 
 from config.rlhf_config import global_args
