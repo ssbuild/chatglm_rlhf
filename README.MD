@@ -1,6 +1,6 @@
 
 ## install
-    pip install -U deep_training>=0.1.5@post2
+    pip install -U deep_training>=0.1.7
     python >= 3.10
 
 

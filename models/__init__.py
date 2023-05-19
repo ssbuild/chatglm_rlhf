@@ -31,13 +31,27 @@ class SftWeightMinMax:
         lora_model.unmerge_adapter()
 
     def load_sft_weight(self, sft_weight_path: str, is_trainable=False, strict=False):
+        assert os.path.exists(sft_weight_path)
         if self.lora_args is not None and self.lora_args.with_lora:
             # 加载lora权重
             self.backbone.from_pretrained(self.backbone.model, pretrained_model_name_or_path=sft_weight_path,
                                           is_trainable=is_trainable)
         else:
+            weight_dict = torch.load(sft_weight_path)
+            weights_dict_new = OrderedDict()
+            valid_keys = ['module','state_dict']
+            for k in valid_keys:
+                if k in weight_dict:
+                    weight_dict = weight_dict[k]
+                    break
+            for k, v in weight_dict.items():
+                rm_key = '_TransformerLightningModule__backbone'
+                if k.startswith(rm_key):
+                    base_model_prefix = self.backbone.base_model_prefix
+                    k = re.sub(r'{}.{}.'.format(rm_key,base_model_prefix), '', k)
+                weights_dict_new[re.sub(r'_forward_module\.', '', k)] = v
             # 加载sft 或者 p-tuning-v2权重
-            self.get_llm_model().load_state_dict(torch.load(sft_weight_path), strict=strict)
+            self.get_llm_model().load_state_dict(weights_dict_new, strict=strict)
 
     def save_sft_weight(self,sft_weight_path, merge_lora_weight=False):
         if self.lora_args is not None and self.lora_args.with_lora:

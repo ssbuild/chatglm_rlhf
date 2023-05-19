@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 # @Time    : 2023/5/17 11:36
+import sys
+sys.path.append("..")
 
 import os
 import numpy as np
@@ -13,10 +15,10 @@ from models import MyRewardTransformer, load_in_8bit,LoraArguments,ChatGLMConfig
 if __name__ == '__main__':
     train_info_args['seed'] = None
     parser = HfArgumentParser((ModelArguments, TrainingArguments, DataArguments, LoraArguments))
-    model_args, training_args, data_args, _ = parser.parse_dict(train_info_args)
+    model_args, _, data_args, _ = parser.parse_dict(train_info_args)
 
     tokenizer : PreTrainedTokenizer
-    dataHelper = NN_DataHelper(model_args, training_args, data_args)
+    dataHelper = NN_DataHelper(model_args, None, data_args)
     tokenizer, _, _, _ = dataHelper.load_tokenizer_and_config()
 
     ckpt_dir = './best_ckpt'
@@ -25,8 +27,7 @@ if __name__ == '__main__':
 
     assert lora_args.inference_mode == True
 
-    pl_model = MyRewardTransformer(config=config, model_args=model_args, training_args=training_args,lora_args=lora_args,
-                                load_in_8bit=load_in_8bit, device_map="auto")
+    pl_model = MyRewardTransformer(config=config, model_args=model_args, lora_args=lora_args,load_in_8bit=load_in_8bit, device_map="auto")
     # 加载lora权重
     pl_model.load_sft_weight(ckpt_dir)
 

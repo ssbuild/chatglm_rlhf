@@ -22,6 +22,9 @@ class MySimpleModelCheckpoint(SimpleModelCheckpointFabric):
         if lora_args is not None:
             self.weight_file = './best_ckpt'
             self.last_weight_file = './last_ckpt'
+        else:
+            self.weight_file = './best_ckpt/best.pt'
+            self.last_weight_file = './last_ckpt/best.pt'
 
     def on_save_model(
             self, trainer: "pl.Trainer", pl_module: "pl.LightningModule"
@@ -93,7 +96,7 @@ if __name__ == '__main__':
 
 
     if trainer.global_rank == 0:
-        pl_reward_model = load_reward_model('../reward/best_ckpt')
+        pl_reward_model = load_reward_model('../stage2_reward/best_ckpt')
         reward_device = torch.cuda.device_count() - 1
         pl_reward_model = pl_reward_model.half().to(reward_device)
         reward_batch_size = 48
