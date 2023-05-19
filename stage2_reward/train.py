@@ -10,6 +10,8 @@ from lightning import Trainer
 from lightning.pytorch.callbacks import ModelCheckpoint, LearningRateMonitor
 from lightning.pytorch.strategies import DeepSpeedStrategy
 from transformers import HfArgumentParser
+
+from config.reward_config import global_args
 from data_utils import NN_DataHelper, train_info_args, get_deepspeed_config
 from models import MyRewardTransformer, load_in_8bit,ChatGLMTokenizer,ChatGLMConfig
 
@@ -83,6 +85,28 @@ if __name__ == '__main__':
     if deepspeed_config is not None and len(deepspeed_config):
         strategy = DeepSpeedStrategy(config=deepspeed_config, )
 
+    config_kwargs = {"pre_seq_len": global_args["pre_seq_len"],
+                     "prefix_projection": global_args["pre_seq_len"]}
+    if global_args["num_layers"] > 0:
+        config_kwargs["num_layers"] = global_args["num_layers"]
+    dataHelper = NN_DataHelper(model_args, training_args, data_args)
+    tokenizer, config, _, _ = dataHelper.load_tokenizer_and_config(tokenizer_class_name=ChatGLMTokenizer,
+                                                                   config_class_name=ChatGLMConfig,config_kwargs=config_kwargs)
+    assert tokenizer.eos_token_id == 130005
+    if config.quantization_bit != 0 and not config.pre_seq_len:
+        raise AssertionError("quantization only support ptv2 finetuning")
+
+    if config.quantization_bit != 0 and lora_args is not None:
+        raise AssertionError("quantization only support ptv2 finetuning")
+
+    if config.pre_seq_len is not None and lora_args is not None:
+        raise ValueError('with lora and ptuning v2 cannot open at the same time')
+
+    precision = '16'  # 半精度训练 "32": "32-true", "16": "16-mixed", "bf16": "bf16-mixed"
+    if config.quantization_bit != 0:
+        # 量化权重 p-tuning-v2训练
+        precision = '32'
+
     trainer = Trainer(
         callbacks=[checkpoint_callback, LearningRateMonitor(logging_interval='step')],
         max_epochs=training_args.max_epochs,
@@ -95,15 +119,12 @@ if __name__ == '__main__':
         accumulate_grad_batches=training_args.gradient_accumulation_steps,
         num_sanity_val_steps=0,
         strategy=strategy,
-        precision=16,#半精度
+        precision=precision,#半精度
     )
 
-    dataHelper = NN_DataHelper(model_args, training_args, data_args)
-    tokenizer, config, _, _ = dataHelper.load_tokenizer_and_config(tokenizer_class_name=ChatGLMTokenizer,
-                                                                   config_class_name=ChatGLMConfig)
-    assert tokenizer.eos_token_id == 130005
-    if config.pre_seq_len is not None and lora_args is not None:
-        raise ValueError('with lora and ptuning v2 cannot open at the same time')
+
+
+
 
     # 额外参数
     checkpoint_callback.tokenizer = tokenizer
@@ -121,22 +142,23 @@ if __name__ == '__main__':
     pl_model = MyRewardTransformer(config=config, model_args=model_args, training_args=training_args, lora_args=lora_args,
                                    load_in_8bit=load_in_8bit,device_map={"": trainer.local_rank} if trainer.world_size > 1 else "auto")
 
-    # 加载 三种 不同的 sft 权重
-    # 加载 p-tuning-v2 sft权重
-    # pl_model.get_llm_model().load_state_dict(torch.load('pytorch_model_sft_ptv2.bin'), strict=False)
-
-    # 加载微调sft权重
-    # pl_model.get_llm_model().load_state_dict(torch.load('pytorch_model_sft.bin'), strict=False)
-
-    # 加载lora sft权重
-    # pl_model.backbone.from_pretrained(pl_model.backbone.model, pretrained_model_name_or_path='./best_ckpt')
+    # 恢复权重继续训练
+    # pl_model.load_sft_weight('./best_ckpt/best.pt',is_trainable=True)
 
 
     # pl_model.half()
     #
     # pl_model.load_sft_weight('./best_ckpt/best.pt')
 
-    pl_model.float()
+    if config.quantization_bit != 0 or global_args["load_in_8bit"]:
+        pl_model.half()
+    else:
+        pl_model.float()
+
+
+    def dataset_loader_filter_fn(dataset):
+        print('*' * 30, 'total', len(dataset))
+        return dataset
 
     train_datasets = dataHelper.load_distributed_random_sampler(
         dataHelper.train_files,
@@ -144,7 +166,11 @@ if __name__ == '__main__':
         collate_fn=dataHelper.collate_fn,
         batch_size=training_args.train_batch_size,
         drop_last=True,  # 多卡建议扔掉
-        num_processes=trainer.world_size, process_index=trainer.global_rank)
+        num_processes=trainer.world_size, process_index=trainer.global_rank,
+        dataset_loader_filter_fn=dataset_loader_filter_fn,
+        num_workers=0,# Dataloader num_workers
+
+    )
 
     if train_datasets is not None:
         trainer.fit(pl_model, train_dataloaders=train_datasets)

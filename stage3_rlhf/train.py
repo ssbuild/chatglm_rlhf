@@ -9,6 +9,7 @@ from deep_training.utils.trainer import SimpleModelCheckpointFabric
 from lightning.pytorch.strategies import DeepSpeedStrategy
 from transformers import HfArgumentParser
 
+from config.rlhf_config import global_args
 from data_utils import NN_DataHelper, train_info_args, get_deepspeed_config
 from models import MyPPOTransformer, LoraArguments, LoraConfig, PPOArguments, PPOConfig, load_reward_model, \
     load_ref_model, load_in_8bit,ChatGLMTokenizer,ChatGLMConfig
@@ -67,6 +68,30 @@ if __name__ == '__main__':
     if deepspeed_config is not None and len(deepspeed_config):
         strategy = DeepSpeedStrategy(config=deepspeed_config, )
 
+    dataHelper = NN_DataHelper(model_args, training_args, data_args, ppo_args=ppo_args)
+    config_kwargs = {"pre_seq_len": global_args["pre_seq_len"],
+                     "prefix_projection": global_args["pre_seq_len"]}
+    if global_args["num_layers"] > 0:
+        config_kwargs["num_layers"] = global_args["num_layers"]
+    tokenizer, config, _, _ = dataHelper.load_tokenizer_and_config(tokenizer_class_name=ChatGLMTokenizer,
+                                                                   config_class_name=ChatGLMConfig,
+                                                                   config_kwargs=config_kwargs)
+    assert tokenizer.eos_token_id == 130005
+    if config.quantization_bit != 0 and not config.pre_seq_len:
+        raise AssertionError("quantization only support ptv2 finetuning")
+
+    if config.quantization_bit != 0 and lora_args is not None:
+        raise AssertionError("quantization only support ptv2 finetuning")
+
+    if config.pre_seq_len is not None and lora_args is not None:
+        raise ValueError('with lora and ptuning v2 cannot open at the same time')
+
+
+    precision = '16-mixed'  # 半精度训练 "32": "32-true", "16": "16-mixed", "bf16": "bf16-mixed"
+    if config.quantization_bit != 0:
+        # 量化权重 p-tuning-v2训练
+        precision = '32'
+
     trainer = PPOTrainer(
         callbacks=[ checkpoint_callback],
         max_epochs=training_args.max_epochs,
@@ -77,13 +102,9 @@ if __name__ == '__main__':
         accumulate_grad_batches=training_args.gradient_accumulation_steps,
         #max_grad_norm=training_args.max_grad_norm,
         strategy=strategy,
-        precision='16-mixed',# 混合精度 , 需注释掉 max_grad_norm
+        precision=precision,# 混合精度 , 需注释掉 max_grad_norm
     )
 
-    dataHelper = NN_DataHelper(model_args, training_args, data_args,ppo_args=ppo_args)
-    tokenizer, config, _, _ = dataHelper.load_tokenizer_and_config(tokenizer_class_name=ChatGLMTokenizer,
-                                                                   config_class_name=ChatGLMConfig)
-    assert tokenizer.eos_token_id == 130005
 
     # 额外参数
     # checkpoint_callback.tokenizer = tokenizer
@@ -142,18 +163,17 @@ if __name__ == '__main__':
     pl_model = MyPPOTransformer(config=config,model_args=model_args,training_args=training_args,lora_args=lora_args,ppo_args=ppo_args,
                                 load_in_8bit=load_in_8bit,device_map={"": trainer.fabric.local_rank} if trainer.world_size > 1 else "auto")
 
-    # 加载 三种 不同的 sft 权重
-    #加载 p-tuning-v2 sft权重
-    #pl_model.get_llm_model().load_state_dict(torch.load('pytorch_model_sft_ptv2.bin'), strict=False)
+    # 恢复权重继续训练
+    # pl_model.load_sft_weight('./best_ckpt/best.pt',is_trainable=True)
 
-    #加载微调sft权重
-    #pl_model.get_llm_model().load_state_dict(torch.load('pytorch_model_sft.bin'), strict=False)
+    # pl_model.half()
+    #
+    # pl_model.load_sft_weight('./best_ckpt/best.pt')
 
-    # 加载lora sft权重
-    #pl_model.backbone.from_pretrained(pl_model.backbone.model, pretrained_model_name_or_path='./best_ckpt')
-
-    # 如果使用Trainer.precision = '16-mixed', 需要pl_model.float() 并且注释掉Trainer.max_grad_norm  # 混合精度
-    pl_model.float()
+    if config.quantization_bit != 0 or global_args["load_in_8bit"]:
+        pl_model.half()
+    else:
+        pl_model.float()
 
     #pl_model.bfloat16()
 
@@ -162,58 +182,31 @@ if __name__ == '__main__':
     pl_ref_model.eval().half()
     pl_ref_model.requires_grad_(False)
 
-    ckpt_path = './best_ckpt/best.pt'
-    if not data_args.convert_onnx:
-        #  只恢复权重 ， 不恢复步数和优化器 ，
-        #  如果想恢复步数， 修改 trainer.fit(pl_model, train_dataloaders=train_datasets，ckpt=ckpt_path)  注lora 当前不支持恢复步数。
-        # if os.path.exists(ckpt_path):
-        #     if  lora_args is None:
-        #         # 加载权重继续训练
-        #         pl_model = MyPPOTransformer.load_from_checkpoint(ckpt_path, config=config,model_args=model_args,training_args=training_args,lora_args=lora_args,strict=False)
-        #     else:
-        #         # 加载lora权重 继续训练  0.0.20版本支持lora 继续训练
-        #         pl_model.backbone.from_pretrained(pl_model.backbone.model, pretrained_model_name_or_path=ckpt_path,lora_config=lora_args,is_trainable=True,strict=False)
-
-        train_datasets = dataHelper.load_distributed_random_sampler(
-            dataHelper.train_files,
-            with_load_memory=True,
-            collate_fn=dataHelper.collate_fn,
-            # batch_size=training_args.train_batch_size,
-            batch_size=ppo_args.chunk_size,
-            drop_last=True,  # 多卡建议扔掉
-            num_processes=trainer.world_size, process_index=trainer.global_rank)
-
-        if train_datasets is not None:
-            trainer.fit(pl_model,
-                        ref_model=pl_ref_model,
-                        train_loader=train_datasets,
-                        tokenizer=tokenizer,
-                        reward_fn=reward_fn,
-                        ppo_config=ppo_args,
-                        stop_sequences=["Human:", "human:", "Assistant:", "assistant:"],
-                        )
-
-    else:
-        if lora_args is None:
-            # 加载权重
-            pl_model = MyPPOTransformer.load_from_checkpoint(ckpt_path, config=config,
-                                                          model_args=model_args,
-                                                          training_args=training_args,
-                                                          lora_args=lora_args, strict=False)
 
 
-            model = pl_model.get_glm_model()
-            # 保存huggingface model
-            model.save_pretrained('huggingface_model', max_shard_size='10GB')
-        else:
-            # 加载权重
-            lora_args = LoraArguments.from_pretrained('./best_ckpt')
-            pl_module = MyPPOTransformer(lora_args=lora_args,
-                                      config=config,
-                                      model_args=model_args,
-                                      training_args=training_args)
-            # 二次加载权重
-            pl_module.backbone.from_pretrained(pl_module.backbone.model, pretrained_model_name_or_path='./best_ckpt',
-                                               lora_config=lora_args)
+    def dataset_loader_filter_fn(dataset):
+        print('*' * 30, 'total', len(dataset))
+        return dataset
 
-            model = pl_model.get_llm_model()
+    train_datasets = dataHelper.load_distributed_random_sampler(
+        dataHelper.train_files,
+        with_load_memory=True,
+        collate_fn=dataHelper.collate_fn,
+        # batch_size=training_args.train_batch_size,
+        batch_size=ppo_args.chunk_size,
+        drop_last=True,  # 多卡建议扔掉
+        num_processes=trainer.world_size, process_index=trainer.global_rank,
+        dataset_loader_filter_fn=dataset_loader_filter_fn,
+        num_workers=0,  # Dataloader num_workers
+    )
+
+    if train_datasets is not None:
+        trainer.fit(pl_model,
+                    ref_model=pl_ref_model,
+                    train_loader=train_datasets,
+                    tokenizer=tokenizer,
+                    reward_fn=reward_fn,
+                    ppo_config=ppo_args,
+                    stop_sequences=["Human:", "human:", "Assistant:", "assistant:"],
+                    )
+
