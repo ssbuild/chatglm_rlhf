@@ -14,12 +14,16 @@ from models import MyPPOTransformer, LoraArguments, LoraConfig, PPOArguments, PP
     load_ref_model, load_in_8bit,ChatGLMTokenizer,ChatGLMConfig
 from deep_training.nlp.rl.ppo.ppo_trainer import PPOTrainer
 
+deepspeed_config = get_deepspeed_config()
 
 class MySimpleModelCheckpoint(SimpleModelCheckpointFabric):
     def __init__(self, *args, **kwargs):
         super(MySimpleModelCheckpoint, self).__init__(*args, **kwargs)
         lora_args:LoraConfig= self.external_kwargs['lora_args']
-        if lora_args is not None:
+        if deepspeed_config is not None:
+            self.weight_file = './best_ckpt/last.ckpt'
+            self.last_weight_file = './last_ckpt/last.ckpt'
+        elif lora_args is not None:
             self.weight_file = './best_ckpt'
             self.last_weight_file = './last_ckpt'
         else:
@@ -47,7 +51,7 @@ if __name__ == '__main__':
     lora_args = lora_args.config
     ppo_args = ppo_args.config
 
-    deepspeed_config = get_deepspeed_config()
+
 
     checkpoint_callback = MySimpleModelCheckpoint(
         # monitor="loss",
