@@ -58,8 +58,16 @@ train_info_args = {
     'model_type': 'bloom',
     # 预训练模型路径 , 从0训练，则置空
     'model_name_or_path': '/data/nlp/pre_models/torch/chatglm/chatglm-6b',
-    'config_name': '../models/config/config.json',
+    'config_name': '/data/nlp/pre_models/torch/chatglm/chatglm-6b/config.json',
     'tokenizer_name': '/data/nlp/pre_models/torch/chatglm/chatglm-6b',
+
+    # 'model_name_or_path': '/data/nlp/pre_models/torch/chatglm/chatglm-6b-int4',
+    # 'config_name': '/data/nlp/pre_models/torch/chatglm/chatglm-6b-int4/config.json',
+    # 'tokenizer_name': '/data/nlp/pre_models/torch/chatglm/chatglm-6b-int4',
+
+    # 'model_name_or_path': '/data/nlp/pre_models/torch/chatglm/chatglm-6b-int8',
+    # 'config_name': '/data/nlp/pre_models/torch/chatglm/chatglm-6b-int8/config.json',
+    # 'tokenizer_name': '/data/nlp/pre_models/torch/chatglm/chatglm-6b-int8',
 
     'convert_onnx': False, # 转换onnx模型
     'do_train': True,
