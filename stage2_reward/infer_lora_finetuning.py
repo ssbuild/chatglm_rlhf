@@ -45,7 +45,7 @@ if __name__ == '__main__':
     #保存sft权重
     # pl_model.save_sft_weight('convert/pytorch_model_sft.bin')
 
-    if global_args["load_in_8bit"]:
+    if getattr(pl_model.get_llm_model(), "is_loaded_in_8bit", False):
         pl_model.eval().cuda()
     else:
         pl_model.eval().half().cuda()
