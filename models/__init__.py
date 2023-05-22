@@ -172,7 +172,7 @@ def load_reward_model(sft_model_dir,sft_weight_path=None) ->MyRewardTransformer:
     config = ChatGLMConfig.from_pretrained(sft_model_dir)
     # 加载权重
     lora_args = LoraArguments.from_pretrained(sft_model_dir) if lora_args else None
-    pl_module = MyRewardTransformer(config=config,model_args=model_args,lora_args=lora_args,allow_extra_keys=True)
+    pl_module = MyRewardTransformer(config=config,model_args=model_args,lora_args=lora_args)
 
     # 加载lora sft 或者 sft 或者 p-tuning-v2 权重
     if lora_args and sft_weight_path is None:
@@ -193,7 +193,7 @@ def load_ref_model(ref_train_info_args,sft_model_dir,sft_weight_path=None) ->MyP
                             如果是普通 或者 p-tuning-v2 则是权重文件
     '''
     parser = HfArgumentParser((ModelArguments, DataArguments, LoraArguments))
-    model_args, data_args, lora_args = parser.parse_dict(ref_train_info_args)
+    model_args, data_args, lora_args = parser.parse_dict(ref_train_info_args,allow_extra_keys=True)
     lora_args = lora_args.config
     config = ChatGLMConfig.from_pretrained(sft_model_dir)
     # 加载权重
