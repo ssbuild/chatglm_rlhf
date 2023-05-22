@@ -101,11 +101,6 @@ if __name__ == '__main__':
     if config.pre_seq_len is not None and lora_args is not None:
         raise ValueError('with lora and ptuning v2 cannot open at the same time')
 
-    # #默认32精度 ， 可以自行尝试
-    precision = '16'  # 半精度训练 "32": "32-true", "16": "16-mixed", "bf16": "bf16-mixed"
-    if config.quantization_bit != 0:
-        # 量化权重 p-tuning-v2训练
-        precision = '32'
 
     trainer = Trainer(
         callbacks=[checkpoint_callback, LearningRateMonitor(logging_interval='step')],
@@ -119,7 +114,7 @@ if __name__ == '__main__':
         accumulate_grad_batches=training_args.gradient_accumulation_steps,
         num_sanity_val_steps=0,
         strategy=strategy,
-        precision=precision,#半精度
+        precision='16'  # 可以自行尝试 "32": "32-true", "16": "16-mixed", "bf16": "bf16-mixed"
     )
 
 
@@ -144,9 +139,6 @@ if __name__ == '__main__':
 
     # 恢复权重继续训练
     # pl_model.load_sft_weight('./best_ckpt/best.pt',is_trainable=True)
-
-
-    # pl_model.half()
 
     if config.pre_seq_len is not None:
         # P-tuning v2
