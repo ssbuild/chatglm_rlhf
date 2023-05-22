@@ -98,7 +98,8 @@ if __name__ == '__main__':
         accumulate_grad_batches=training_args.gradient_accumulation_steps,
         #max_grad_norm=training_args.max_grad_norm,
         strategy=strategy,
-        precision='16'  # 可以自行尝试 "32": "32-true", "16": "16-mixed", "bf16": "bf16-mixed"
+        # lora int8 precision='32'
+        precision='32' if global_args['load_in_8bit'] else '16',# 可以自行尝试  "32": "32-true", "16": "16-mixed", "bf16": "bf16-mixed"
     )
 
 
