@@ -87,7 +87,7 @@ if __name__ == '__main__':
         raise ValueError('with lora and ptuning v2 cannot open at the same time')
 
     # 默认32精度 ， 可以自行尝试
-    precision = '32'  # 半精度训练 "32": "32-true", "16": "16-mixed", "bf16": "bf16-mixed"
+    precision = '16'  # 半精度训练 "32": "32-true", "16": "16-mixed", "bf16": "bf16-mixed"
     if config.quantization_bit != 0:
         # 量化权重 p-tuning-v2训练
         precision = '32'
@@ -168,11 +168,14 @@ if __name__ == '__main__':
 
     # pl_model.half()
 
-
-    if config.quantization_bit != 0 or not global_args["load_in_8bit"]:
+    if config.pre_seq_len is not None:
+        # P-tuning v2
         pl_model.half()
+        pl_model.get_llm_model().transformer.prefix_encoder.float()
     else:
-        pl_model.float()
+        # Finetune
+        pl_model = pl_model.float()
+
 
     #pl_model.bfloat16()
 
