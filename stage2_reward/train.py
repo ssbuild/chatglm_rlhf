@@ -1,6 +1,9 @@
 # @Time    : 2023/4/19 23:03
 # @Author  : tk
 # @FileName: train.py
+import sys
+sys.path.append('..')
+
 import logging
 import torch
 from deep_training.data_helper import ModelArguments, DataArguments, TrainingArguments

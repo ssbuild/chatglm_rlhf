@@ -46,4 +46,4 @@ def make_json_data3():
             f.write(json.dumps(d, ensure_ascii=False) + '\n')
 
 if __name__ == '__main__':
-    make_json_data3()
+    make_json_data2()

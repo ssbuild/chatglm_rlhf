@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
 # @Time    : 2023/4/20 17:08
+
+import sys
+sys.path.append('..')
+
 import copy
 import logging
 import math
@@ -9,11 +13,11 @@ from deep_training.utils.trainer import SimpleModelCheckpointFabric
 from lightning.fabric.strategies import DeepSpeedStrategy
 from transformers import HfArgumentParser
 
-from config.rlhf_config import global_args
 from data_utils import NN_DataHelper, train_info_args, get_deepspeed_config
 from models import MyPPOTransformer, LoraArguments, LoraConfig, PPOArguments, PPOConfig, load_reward_model, \
     load_ref_model,ChatGLMTokenizer,ChatGLMConfig
 from deep_training.nlp.rl.ppo.ppo_trainer import PPOTrainer
+from config.rlhf_config import global_args
 
 deepspeed_config = get_deepspeed_config()
 
