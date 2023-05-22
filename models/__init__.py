@@ -161,18 +161,18 @@ class MyPPOTransformer(MyChatglmModelForCausalPrefixLMWithValueHead,PPOModelLoss
 
 def load_reward_model(sft_model_dir,sft_weight_path=None) ->MyRewardTransformer:
     '''
-        sft_model_dir: 模型配置路径 ， 路径下需存在config.json
-        weight_path: 如果是lora 则是lora 权重路径 （）
-                     如果是普通 或者 p-tuning-v2 则是权重文件
+        sft_model_dir:      模型配置路径 ， 路径下需存在config.json
+        sft_weight_path:    如果是lora 则是lora 权重路径
+                            如果是普通 或者 p-tuning-v2 则是权重文件
     '''
 
-    parser = HfArgumentParser((ModelArguments, TrainingArguments, DataArguments, LoraArguments))
-    model_args, training_args, data_args, lora_args = parser.parse_dict(reward_config.train_info_args)
+    parser = HfArgumentParser((ModelArguments, DataArguments, LoraArguments))
+    model_args, data_args, lora_args = parser.parse_dict(reward_config.train_info_args,allow_extra_keys=True)
     lora_args = lora_args.config
     config = ChatGLMConfig.from_pretrained(sft_model_dir)
     # 加载权重
     lora_args = LoraArguments.from_pretrained(sft_model_dir) if lora_args else None
-    pl_module = MyRewardTransformer(config=config,model_args=model_args,training_args=training_args,lora_args=lora_args)
+    pl_module = MyRewardTransformer(config=config,model_args=model_args,lora_args=lora_args,allow_extra_keys=True)
 
     # 加载lora sft 或者 sft 或者 p-tuning-v2 权重
     if lora_args and sft_weight_path is None:
@@ -188,17 +188,17 @@ def load_reward_model(sft_model_dir,sft_weight_path=None) ->MyRewardTransformer:
 
 def load_ref_model(ref_train_info_args,sft_model_dir,sft_weight_path=None) ->MyPPOTransformer:
     '''
-        sft_model_dir: 模型配置路径 ， 路径下需存在config.json
-        weight_path: 如果是lora 则是lora 权重路径 （）
-                     如果是普通 或者 p-tuning-v2 则是权重文件
+        sft_model_dir:      模型配置路径 ， 路径下需存在config.json
+        sft_weight_path:    如果是lora 则是lora 权重路径
+                            如果是普通 或者 p-tuning-v2 则是权重文件
     '''
-    parser = HfArgumentParser((ModelArguments, TrainingArguments, DataArguments, LoraArguments))
-    model_args, training_args, data_args, lora_args = parser.parse_dict(ref_train_info_args)
+    parser = HfArgumentParser((ModelArguments, DataArguments, LoraArguments))
+    model_args, data_args, lora_args = parser.parse_dict(ref_train_info_args)
     lora_args = lora_args.config
     config = ChatGLMConfig.from_pretrained(sft_model_dir)
     # 加载权重
     lora_args = LoraArguments.from_pretrained(sft_model_dir) if lora_args else None
-    pl_module = MyPPOTransformer(config=config,model_args=model_args,training_args=training_args,lora_args=lora_args)
+    pl_module = MyPPOTransformer(config=config,model_args=model_args,lora_args=lora_args)
 
     # 加载lora sft 或者 sft 或者 p-tuning-v2 权重
     if lora_args and sft_weight_path is None:

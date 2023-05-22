@@ -122,7 +122,12 @@ if __name__ == '__main__':
 
 
     if trainer.global_rank == 0:
+        #加载lora
         pl_reward_model = load_reward_model('../stage2_reward/best_ckpt')
+
+        #加载 全参数微调或者p-tuning-v2权重
+        #pl_reward_model = load_reward_model('../stage2_reward/best_ckpt','last.pt')
+
         reward_device = torch.cuda.device_count() - 1
         pl_reward_model = pl_reward_model.half().to(reward_device)
         reward_batch_size = 48
