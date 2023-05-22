@@ -172,14 +172,14 @@ if __name__ == '__main__':
     # 恢复权重继续训练
     # pl_model.load_sft_weight('./best_ckpt/best.pt',is_trainable=True)
 
-    if config.pre_seq_len is not None:
-        # P-tuning v2
-        pl_model.get_llm_model().half()
-        pl_model.get_llm_model().transformer.prefix_encoder.float()
-    else:
-        # Finetune
-        pl_model = pl_model.float()
-
+    # if config.pre_seq_len is not None:
+    #     # P-tuning v2
+    #     pl_model.get_llm_model().float()
+    #     pl_model.get_llm_model().transformer.prefix_encoder.float()
+    # else:
+    #     # Finetune
+    #     pl_model = pl_model.float()
+    pl_model = pl_model.float()
 
     # pl_ref_model = load_ref_model('../reward/best_ckpt')
     pl_ref_model = copy.deepcopy(pl_model)

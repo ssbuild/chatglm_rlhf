@@ -55,7 +55,7 @@ adalora_info_args = {
 train_info_args = {
     'devices': 1,
     'data_backend': 'record',
-    'model_type': 'bloom',
+    'model_type': 'chatglm',
     # 预训练模型路径 , 从0训练，则置空
     'model_name_or_path': '/data/nlp/pre_models/torch/chatglm/chatglm-6b',
     'config_name': '/data/nlp/pre_models/torch/chatglm/chatglm-6b/config.json',
