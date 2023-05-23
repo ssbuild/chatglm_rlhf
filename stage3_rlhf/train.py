@@ -90,7 +90,7 @@ if __name__ == '__main__':
     if config.pre_seq_len is not None and lora_args is not None:
         raise ValueError('with lora and ptuning v2 cannot open at the same time')
 
-
+    assert config.quantization_bit == 0,ValueError('量化权重不支持ppo training')
 
     trainer = PPOTrainer(
         callbacks=[ checkpoint_callback],
