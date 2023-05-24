@@ -26,20 +26,6 @@ class MySimpleModelCheckpoint(SimpleModelCheckpoint):
             self.weight_file = './best_ckpt'
             self.last_weight_file = './last_ckpt'
 
-    def load_model_from_ckpt(self):
-        model_args = self.external_kwargs['model_args']
-        training_args = self.external_kwargs['training_args']
-        lora_args = LoraArguments.from_pretrained(self.last_weight_file)
-        pl_module = MyRewardTransformer(lora_args=lora_args,
-                              config=config,
-                              model_args=model_args,
-                              training_args=training_args)
-
-
-        pl_module.backbone.from_pretrained(pl_module.backbone.model,self.last_weight_file)
-        return pl_module
-
-
     def on_save_model(
             self, trainer: "pl.Trainer", pl_module: "pl.LightningModule"
     ) -> None:
