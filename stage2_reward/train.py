@@ -46,6 +46,32 @@ if __name__ == '__main__':
     model_args, training_args, data_args, lora_args = parser.parse_dict(train_info_args)
     lora_args = lora_args.config
 
+    config_kwargs = {"pre_seq_len": global_args["pre_seq_len"],
+                     "prefix_projection": global_args["pre_seq_len"]}
+    if global_args["num_layers"] > 0:
+        config_kwargs["num_layers"] = global_args["num_layers"]
+    dataHelper = NN_DataHelper(model_args, training_args, data_args)
+    tokenizer, config, _, _ = dataHelper.load_tokenizer_and_config(tokenizer_class_name=ChatGLMTokenizer,
+                                                                   config_class_name=ChatGLMConfig,
+                                                                   config_kwargs=config_kwargs)
+    assert tokenizer.eos_token_id == 130005
+    if config.quantization_bit != 0 and not config.pre_seq_len:
+        raise AssertionError("quantization only support ptv2 finetuning")
+
+    if config.quantization_bit != 0 and lora_args is not None:
+        raise AssertionError("quantization only support ptv2 finetuning")
+
+    if config.pre_seq_len is not None and lora_args is not None:
+        raise ValueError('with lora and ptuning v2 cannot open at the same time')
+        # 缓存数据集
+    if data_args.do_train:
+        dataHelper.make_dataset_with_args(data_args.train_file, mixed_data=False, shuffle=True, mode='train')
+    if data_args.do_eval:
+        dataHelper.make_dataset_with_args(data_args.eval_file, mode='eval')
+    if data_args.do_test:
+        dataHelper.make_dataset_with_args(data_args.test_file, mode='test')
+
+
     deepspeed_config = get_deepspeed_config()
     # 保存最小loss模型
     if lora_args is not None:
@@ -73,22 +99,6 @@ if __name__ == '__main__':
     if deepspeed_config is not None and len(deepspeed_config):
         strategy = DeepSpeedStrategy(config=deepspeed_config, )
 
-    config_kwargs = {"pre_seq_len": global_args["pre_seq_len"],
-                     "prefix_projection": global_args["pre_seq_len"]}
-    if global_args["num_layers"] > 0:
-        config_kwargs["num_layers"] = global_args["num_layers"]
-    dataHelper = NN_DataHelper(model_args, training_args, data_args)
-    tokenizer, config, _, _ = dataHelper.load_tokenizer_and_config(tokenizer_class_name=ChatGLMTokenizer,
-                                                                   config_class_name=ChatGLMConfig,config_kwargs=config_kwargs)
-    assert tokenizer.eos_token_id == 130005
-    if config.quantization_bit != 0 and not config.pre_seq_len:
-        raise AssertionError("quantization only support ptv2 finetuning")
-
-    if config.quantization_bit != 0 and lora_args is not None:
-        raise AssertionError("quantization only support ptv2 finetuning")
-
-    if config.pre_seq_len is not None and lora_args is not None:
-        raise ValueError('with lora and ptuning v2 cannot open at the same time')
 
 
     trainer = Trainer(
@@ -108,24 +118,18 @@ if __name__ == '__main__':
     )
 
 
-
-
-
     # 额外参数
     checkpoint_callback.tokenizer = tokenizer
     checkpoint_callback.data_args = data_args
     config.save_pretrained('best_ckpt')
 
-    # 缓存数据集
-    if data_args.do_train:
-        dataHelper.make_dataset_with_args(data_args.train_file, mixed_data=False, shuffle=True, mode='train')
-    if data_args.do_eval:
-        dataHelper.make_dataset_with_args(data_args.eval_file, mode='eval')
-    if data_args.do_test:
-        dataHelper.make_dataset_with_args(data_args.test_file, mode='test')
+
 
     pl_model = MyRewardTransformer(config=config, model_args=model_args, training_args=training_args, lora_args=lora_args,
-                                   load_in_8bit=global_args["load_in_8bit"],device_map={"": trainer.local_rank} if trainer.world_size > 1 else "auto")
+                                   quantization_config=global_args["quantization_config"],
+                                   load_in_8bit=global_args["load_in_8bit"],
+                                   device_map={"": trainer.local_rank} if trainer.world_size > 1 else "auto",
+                                   torch_dtype=torch.float16, )
 
     # 恢复权重继续训练
     # pl_model.load_sft_weight('./best_ckpt/best.pt',is_trainable=True)

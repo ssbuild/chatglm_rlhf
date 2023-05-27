@@ -29,17 +29,25 @@ class MyChatGLMForConditionalGeneration(ChatGLMForConditionalGeneration):
 
 class MyTransformerChatGlmLMHeadModel(TransformerBase):
     def __init__(self, *args,**kwargs):
-        # 如果显卡支持int8 可以开启 ， 需安装依赖 pip install bitsandbytes
+        # 如果显卡支持int8 可以开启
         load_in_8bit = kwargs.get('load_in_8bit', False)
-        if not load_in_8bit:
+        load_in_4bit = kwargs.get('load_in_4bit', False)
+        if not load_in_4bit:
+            quantization_config = kwargs.get("quantization_config", None)
+            if quantization_config:
+                load_in_4bit = quantization_config.load_in_4bit
+
+        if not load_in_8bit and not load_in_4bit:
             kwargs.pop("device_map", None)
+            kwargs.pop("quantization_config", None)
         super(MyTransformerChatGlmLMHeadModel, self).__init__(*args,**kwargs)
         self.set_model(self.from_pretrained(MyChatGLMForConditionalGeneration, *args, **kwargs))
 
-        if load_in_8bit:
-            setattr(self.model, 'model_parallel', True)
-            setattr(self.model, 'is_parallelizable', True)
-            self.model.enable_input_require_grads()
+    def enable_input_require_grads(self):
+        setattr(self.model, 'model_parallel', True)
+        setattr(self.model, 'is_parallelizable', True)
+        # self.model.gradient_checkpointing_enable()
+        self.model.enable_input_require_grads()
 
 
 class MyRewardChatGlmLMHeadModel(MyTransformerChatGlmLMHeadModel):
@@ -145,14 +153,22 @@ class MyRewardChatGlmLMHeadModel(MyTransformerChatGlmLMHeadModel):
 
 class MyChatglmModelForCausalPrefixLMWithValueHead(ChatglmModelForCausalPrefixLMWithValueHead):
     def __init__(self, *args,up_sampling_score=False, **kwargs):
-        # 如果显卡支持int8 可以开启 ， 需安装依赖 pip install bitsandbytes
+        # 如果显卡支持int8 可以开启
         load_in_8bit = kwargs.get('load_in_8bit', False)
-        if not load_in_8bit:
+        load_in_4bit = kwargs.get('load_in_4bit', False)
+        if not load_in_4bit:
+            quantization_config = kwargs.get("quantization_config", None)
+            if quantization_config:
+                load_in_4bit = quantization_config.load_in_4bit
+
+        if not load_in_8bit and not load_in_4bit:
             kwargs.pop("device_map", None)
+            kwargs.pop("quantization_config", None)
         super(MyChatglmModelForCausalPrefixLMWithValueHead, self).__init__(*args, up_sampling_score=up_sampling_score, **kwargs)
         self.set_model(self.from_pretrained(MyChatGLMForConditionalGeneration, *args, **kwargs))
 
-        if load_in_8bit:
-            setattr(self.model, 'model_parallel', True)
-            setattr(self.model, 'is_parallelizable', True)
-            self.model.enable_input_require_grads()
+    def enable_input_require_grads(self):
+        setattr(self.model, 'model_parallel', True)
+        setattr(self.model, 'is_parallelizable', True)
+        # self.model.gradient_checkpointing_enable()
+        self.model.enable_input_require_grads()

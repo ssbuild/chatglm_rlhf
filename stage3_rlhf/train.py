@@ -56,22 +56,6 @@ if __name__ == '__main__':
     lora_args = lora_args.config
     ppo_args = ppo_args.config
 
-
-
-    checkpoint_callback = MySimpleModelCheckpoint(
-        # monitor="loss",
-        save_weights_only=True,
-        every_n_epochs=1,
-        every_n_train_steps=1000 // training_args.gradient_accumulation_steps,
-        # 模型参数
-        model_args=model_args,
-        training_args=training_args,
-        lora_args=lora_args, )
-
-    strategy = 'ddp' if torch.cuda.device_count() >= 1 else 'auto'
-    if deepspeed_config is not None and len(deepspeed_config):
-        strategy = DeepSpeedStrategy(config=deepspeed_config, )
-
     dataHelper = NN_DataHelper(model_args, training_args, data_args, ppo_args=ppo_args)
     config_kwargs = {"pre_seq_len": global_args["pre_seq_len"],
                      "prefix_projection": global_args["pre_seq_len"]}
@@ -90,7 +74,34 @@ if __name__ == '__main__':
     if config.pre_seq_len is not None and lora_args is not None:
         raise ValueError('with lora and ptuning v2 cannot open at the same time')
 
-    assert config.quantization_bit == 0,ValueError('量化权重不支持ppo training')
+    assert config.quantization_bit == 0, ValueError('量化权重不支持ppo training')
+
+    config.save_pretrained('best_ckpt')
+
+    # 缓存数据集
+    if data_args.do_train:
+        dataHelper.make_dataset_with_args(data_args.train_file, mixed_data=False, shuffle=True, mode='train')
+    if data_args.do_eval:
+        dataHelper.make_dataset_with_args(data_args.eval_file, mode='eval')
+    if data_args.do_test:
+        dataHelper.make_dataset_with_args(data_args.test_file, mode='test')
+
+
+    checkpoint_callback = MySimpleModelCheckpoint(
+        # monitor="loss",
+        save_weights_only=True,
+        every_n_epochs=1,
+        every_n_train_steps=1000 // training_args.gradient_accumulation_steps,
+        # 模型参数
+        model_args=model_args,
+        training_args=training_args,
+        lora_args=lora_args, )
+
+    strategy = 'ddp' if torch.cuda.device_count() >= 1 else 'auto'
+    if deepspeed_config is not None and len(deepspeed_config):
+        strategy = DeepSpeedStrategy(config=deepspeed_config, )
+
+
 
     trainer = PPOTrainer(
         callbacks=[ checkpoint_callback],
@@ -110,15 +121,7 @@ if __name__ == '__main__':
     # 额外参数
     # checkpoint_callback.tokenizer = tokenizer
     # checkpoint_callback.data_args = data_args
-    config.save_pretrained('best_ckpt')
 
-    # 缓存数据集
-    if data_args.do_train:
-        dataHelper.make_dataset_with_args(data_args.train_file, mixed_data=False, shuffle=True, mode='train')
-    if data_args.do_eval:
-        dataHelper.make_dataset_with_args(data_args.eval_file, mode='eval')
-    if data_args.do_test:
-        dataHelper.make_dataset_with_args(data_args.test_file, mode='test')
 
 
     if trainer.global_rank == 0:
@@ -126,7 +129,7 @@ if __name__ == '__main__':
         pl_reward_model = load_reward_model('../stage2_reward/best_ckpt')
 
         #加载 全参数微调或者p-tuning-v2权重
-        #pl_reward_model = load_reward_model('../stage2_reward/best_ckpt','last.pt')
+        #pl_reward_model = load_reward_model('../stage2_reward/best_ckpt','../stage2_reward/best_ckpt/last.pt')
 
         reward_device = torch.cuda.device_count() - 1
         pl_reward_model = pl_reward_model.half().to(reward_device)
@@ -167,7 +170,10 @@ if __name__ == '__main__':
         reward_fn = None
 
     pl_model = MyPPOTransformer(config=config,model_args=model_args,training_args=training_args,lora_args=lora_args,ppo_args=ppo_args,
-                                load_in_8bit=global_args["load_in_8bit"],device_map={"": trainer.fabric.local_rank} if trainer.world_size > 1 else "auto")
+                                quantization_config=global_args["quantization_config"],
+                                load_in_8bit=global_args["load_in_8bit"],
+                                device_map={"": trainer.local_rank} if trainer.world_size > 1 else "auto",
+                                torch_dtype=torch.float16, )
 
     # 恢复权重继续训练
     # pl_model.load_sft_weight('./best_ckpt/best.pt',is_trainable=True)
