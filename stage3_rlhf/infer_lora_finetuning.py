@@ -18,7 +18,7 @@ if __name__ == '__main__':
 
     dataHelper = NN_DataHelper(model_args, None, data_args)
     tokenizer, _, _, _ = dataHelper.load_tokenizer_and_config(tokenizer_class_name=ChatGLMTokenizer,
-                                                                   config_class_name=ChatGLMConfig)
+                                                              config_class_name=ChatGLMConfig)
     assert tokenizer.eos_token_id == 130005
 
     ckpt_dir = './best_ckpt'

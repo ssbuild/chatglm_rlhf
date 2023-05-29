@@ -4,22 +4,23 @@ import json
 import os
 import numpy as np
 import torch
-from deep_training.data_helper import ModelArguments, TrainingArguments, DataArguments
+from deep_training.data_helper import ModelArguments, DataArguments
 from tqdm import tqdm
 from transformers import HfArgumentParser,PreTrainedTokenizer
 
 from data_utils import train_info_args, NN_DataHelper
-from models import MyRewardTransformer,LoraArguments,ChatGLMConfig
+from models import MyRewardTransformer,LoraArguments,ChatGLMConfig,ChatGLMTokenizer
 from config.reward_config import global_args
 
 if __name__ == '__main__':
     train_info_args['seed'] = None
     parser = HfArgumentParser((ModelArguments, DataArguments))
-    model_args, data_args = parser.parse_dict(train_info_args)
+    model_args, data_args = parser.parse_dict(train_info_args,allow_extra_keys=True)
 
     tokenizer : PreTrainedTokenizer
     dataHelper = NN_DataHelper(model_args, None, data_args)
-    tokenizer, _, _, _ = dataHelper.load_tokenizer_and_config()
+    tokenizer, _, _, _ = dataHelper.load_tokenizer_and_config(tokenizer_class_name=ChatGLMTokenizer,
+                                                              config_class_name=ChatGLMConfig)
 
     ckpt_dir = './best_ckpt'
     config = ChatGLMConfig.from_pretrained(ckpt_dir)

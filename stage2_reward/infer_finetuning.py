@@ -10,7 +10,7 @@ from transformers import HfArgumentParser,PreTrainedTokenizer
 
 from config.reward_config import get_deepspeed_config
 from data_utils import train_info_args, NN_DataHelper
-from models import MyRewardTransformer ,LoraArguments,ChatGLMConfig
+from models import MyRewardTransformer ,LoraArguments,ChatGLMConfig,ChatGLMTokenizer
 
 
 deep_config = get_deepspeed_config()
@@ -22,7 +22,8 @@ if __name__ == '__main__':
 
     tokenizer : PreTrainedTokenizer
     dataHelper = NN_DataHelper(model_args, None, data_args)
-    tokenizer, _, _, _ = dataHelper.load_tokenizer_and_config()
+    tokenizer, _, _, _ = dataHelper.load_tokenizer_and_config(tokenizer_class_name=ChatGLMTokenizer,
+                                                              config_class_name=ChatGLMConfig)
 
     ckpt_dir = './best_ckpt'
     config = ChatGLMConfig.from_pretrained(ckpt_dir)
