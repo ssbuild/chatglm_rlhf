@@ -8,7 +8,7 @@ from deep_training.nlp.rl.ppo.ppo_module import PPOModelLoss
 from transformers import AdamW
 from deep_training.nlp.optimizer.lion import Lion
 from models.chatglm_model import MyChatGLMForConditionalGeneration
-from models.model_weight import *
+from deep_training.trainer.pl.modelweighter import *
 
 
 class MyChatglmModelForCausalPrefixLMWithValueHead(ChatglmModelForCausalPrefixLMWithValueHead):

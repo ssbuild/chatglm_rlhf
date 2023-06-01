@@ -9,45 +9,15 @@ import logging
 import math
 import torch
 from deep_training.data_helper import ModelArguments, DataArguments, TrainingArguments
-from deep_training.utils.trainer import SimpleModelCheckpointFabric
+from deep_training.trainer.pl.modelcheckpoint import FabricModelCheckpoint
 from lightning.fabric.strategies import DeepSpeedStrategy
 from transformers import HfArgumentParser
-
 from data_utils import NN_DataHelper, train_info_args, get_deepspeed_config
 from models import MyPPOTransformer, LoraArguments, LoraConfig, PPOArguments, PPOConfig, load_reward_model, \
     load_ref_model,ChatGLMTokenizer,ChatGLMConfig
 from deep_training.nlp.rl.ppo.ppo_trainer import PPOTrainer
 from config.rlhf_config import global_args
 
-deepspeed_config = get_deepspeed_config()
-
-class MySimpleModelCheckpoint(SimpleModelCheckpointFabric):
-    def __init__(self, *args, **kwargs):
-        super(MySimpleModelCheckpoint, self).__init__(*args, **kwargs)
-        lora_args:LoraConfig= self.external_kwargs['lora_args']
-        if deepspeed_config is not None:
-            self.weight_file = './best_ckpt/last.ckpt'
-            self.last_weight_file = './last_ckpt/last.ckpt'
-        elif lora_args is not None:
-            self.weight_file = './best_ckpt'
-            self.last_weight_file = './last_ckpt'
-        else:
-            self.weight_file = './best_ckpt/best.pt'
-            self.last_weight_file = './last_ckpt/best.pt'
-
-    def on_save_model(
-            self, trainer: "pl.Trainer", pl_module: "pl.LightningModule"
-    ) -> None:
-
-        lora_args : LoraArguments =  self.external_kwargs['lora_args']
-        # 保存权重
-        if lora_args is None:
-            super(MySimpleModelCheckpoint, self).on_save_model(trainer, pl_module)
-        else:
-            # 保存最新权重
-            logging.info('step {} saving model'.format(trainer.global_step))
-            # 保存最新权重
-            pl_module.backbone.save_pretrained(self.weight_file)
 
 
 if __name__ == '__main__':
@@ -55,6 +25,8 @@ if __name__ == '__main__':
     model_args, training_args, data_args, lora_args, ppo_args = parser.parse_dict(train_info_args)
     lora_args = lora_args.config
     ppo_args = ppo_args.config
+
+    output_weight_dir = './best_ckpt'
 
     dataHelper = NN_DataHelper(model_args, training_args, data_args, ppo_args=ppo_args)
     config_kwargs = {"pre_seq_len": global_args["pre_seq_len"],
@@ -64,6 +36,7 @@ if __name__ == '__main__':
     tokenizer, config, _, _ = dataHelper.load_tokenizer_and_config(tokenizer_class_name=ChatGLMTokenizer,
                                                                    config_class_name=ChatGLMConfig,
                                                                    config_kwargs=config_kwargs)
+    config.save_pretrained(output_weight_dir)
     assert tokenizer.eos_token_id == 130005
     if config.quantization_bit != 0 and not config.pre_seq_len:
         raise AssertionError("quantization only support ptv2 finetuning")
@@ -76,7 +49,6 @@ if __name__ == '__main__':
 
     assert config.quantization_bit == 0, ValueError('量化权重不支持ppo training')
 
-    config.save_pretrained('best_ckpt')
 
     # 缓存数据集
     if data_args.do_train:
@@ -86,22 +58,22 @@ if __name__ == '__main__':
     if data_args.do_test:
         dataHelper.make_dataset_with_args(data_args.test_file, mode='test')
 
-
-    checkpoint_callback = MySimpleModelCheckpoint(
-        # monitor="loss",
-        save_weights_only=True,
-        every_n_epochs=1,
-        every_n_train_steps=1000 // training_args.gradient_accumulation_steps,
-        # 模型参数
-        model_args=model_args,
-        training_args=training_args,
-        lora_args=lora_args, )
-
+    deepspeed_config = get_deepspeed_config()
     strategy = 'ddp' if torch.cuda.device_count() >= 1 else 'auto'
     if deepspeed_config is not None and len(deepspeed_config):
         strategy = DeepSpeedStrategy(config=deepspeed_config, )
 
-
+    checkpoint_callback = FabricModelCheckpoint(
+        # monitor="loss",
+        dirpath=output_weight_dir,
+        save_weights_only=True,
+        every_n_epochs=1,
+        every_n_train_steps=1000 // training_args.gradient_accumulation_steps,
+        save_last=True,
+        # 模型参数
+        model_args=model_args,
+        training_args=training_args,
+        lora_args=lora_args, )
 
     trainer = PPOTrainer(
         callbacks=[ checkpoint_callback],
@@ -118,15 +90,10 @@ if __name__ == '__main__':
     )
 
 
-    # 额外参数
-    # checkpoint_callback.tokenizer = tokenizer
-    # checkpoint_callback.data_args = data_args
-
-
 
     if trainer.global_rank == 0:
         #加载lora
-        pl_reward_model = load_reward_model('../stage2_reward/best_ckpt')
+        pl_reward_model = load_reward_model('../stage2_reward/best_ckpt/last')
 
         #加载 全参数微调或者p-tuning-v2权重
         #pl_reward_model = load_reward_model('../stage2_reward/best_ckpt','../stage2_reward/best_ckpt/last.pt')

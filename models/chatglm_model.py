@@ -13,5 +13,3 @@ __all__ = [
 class MyChatGLMForConditionalGeneration(ChatGLMForConditionalGeneration):
     def __init__(self, *args,**kwargs):
         super(MyChatGLMForConditionalGeneration, self).__init__(*args,**kwargs)
-
-

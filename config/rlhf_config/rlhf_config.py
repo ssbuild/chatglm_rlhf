@@ -7,8 +7,10 @@ import os
 
 import torch
 from transformers import BitsAndBytesConfig
+from config.constant_map import train_info_models
 
-# 默认禁用lora 相关模块 , lora 和 adalora 只能同时启用一个
+# 量化权重不支持此模式训练
+train_model_config = train_info_models['chatglm']
 
 global_args = {
     "load_in_8bit": False,  # lora 如果显卡支持int8 可以开启
@@ -22,8 +24,6 @@ global_args = {
     "num_layers": -1, # 是否使用骨干网络的全部层数 最大1-28， -1 表示全层, 否则只用只用N层
 }
 
-if global_args['load_in_4bit'] != True:
-    global_args['quantization_config'] = None
 
 
 ppp_info_args = {
@@ -62,11 +62,8 @@ train_info_args = {
     'devices': 1,
     'data_backend': 'record',
     'model_type': 'chatglm',
-    # 预训练模型路径 , 从0训练，则置空
-    #ppo 不支持int-4 int-8 权重
-    'model_name_or_path': '/data/nlp/pre_models/torch/chatglm/chatglm-6b',
-    'config_name': '/data/nlp/pre_models/torch/chatglm/chatglm-6b/config.json',
-    'tokenizer_name': '/data/nlp/pre_models/torch/chatglm/chatglm-6b',
+    # 预训练模型路径
+    **train_model_config,
 
 
     'convert_onnx': False, # 转换onnx模型
@@ -124,12 +121,4 @@ train_info_args = {
     "ppo": {**ppp_info_args},
 }
 
-
-
-
-#配置检查
-
-
-if global_args['load_in_8bit'] == global_args['load_in_4bit'] and global_args['load_in_8bit'] == True:
-    raise Exception('load_in_8bit and load_in_4bit only set one at same time!')
 

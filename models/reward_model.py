@@ -2,10 +2,11 @@
 # @Author  : ssbuild
 # @Time    : 2023/5/29 13:34
 import torch
+from deep_training.trainer.pl.modelweighter import *
 from torch import nn
 from deep_training.nlp.models.transformer_base import TransformerBase
 from models.chatglm_model import MyChatGLMForConditionalGeneration
-from models.model_weight import *
+
 
 
 __all__ = [
