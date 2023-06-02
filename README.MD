@@ -37,15 +37,6 @@
 
 
 
-## 切换训练模式配置
-    修改 config/__init__.py       “from config.sft_config import *”  切换配置文件
-    config/sft_config.py            finetuning
-    config/sft_config_lora.py       lora finetuning
-    config/sft_config_lora_int4.py  lora int4 finetuning
-    config/sft_config_lora_int8.py  lora int8 finetuning
-    config/sft_config_ptv2.py       lora p-tuning-v2 finetuning
-
-
 
 ## infer
     # infer_finetuning.py 推理微调模型
@@ -66,59 +57,6 @@
     python train.py
 ```
    
-
-### 单机多卡
-```text
-可见的前两块卡
-train_info_args = {
-    'devices': 2,
-}
-
-# 第一块 和 第三块卡
-train_info_args = {
-    'devices': [0,2],
-}
-```
-
-### 多机多卡训练
-```text
-例子 3个机器 每个机器 4个卡
-修改train.py Trainer num_nodes = 3
-MASTER_ADDR=10.0.0.1 MASTER_PORT=6667 WORLD_SIZE=12 NODE_RANK=0 python train.py 
-MASTER_ADDR=10.0.0.1 MASTER_PORT=6667 WORLD_SIZE=12 NODE_RANK=1 python train.py 
-MASTER_ADDR=10.0.0.1 MASTER_PORT=6667 WORLD_SIZE=12 NODE_RANK=2 python train.py 
-```
-
-###  int8高效训练
-
-    lora int8     使用官方标准float 16权重文件，修改modes.py
-    load_in_8bit = True 
-    修改data_utils.py 对应with_lora=True 
-
-### 混合精度
-
-    Trainer.precision = '16-mixed'
-
-### 超大数据集
-
-    修改data_utils.py "data_backend": "lmdb" 
-
-
-## lora finetuning
-
-    with_lora
-
-## ptv2 finetuning
-
-    with_prompt
-
-## deepspeed
-    启动则将data_utils.py  修改 enable_deepspeed 
-    lora 模式暂时不支持deepspeed
-
-## 精度训练
-    precision = '16' # 半精度训练 "32": "32-true", "16": "16-mixed", "bf16": "bf16-mixed"
-
 
 ## 友情链接
 
