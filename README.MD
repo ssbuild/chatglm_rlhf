@@ -10,7 +10,8 @@
 
 ## install
     python >= 3.10
- - pip install -i https://pypi.org/simple -U -r requirements.txt
+ - pip install -i https://pypi.org/simple -U -r requirements
+ - 如果无法安装 , 可以切换官方源 pip install -i https://pypi.org/simple -U -r requirements.txt  
 
 
 ## update information
