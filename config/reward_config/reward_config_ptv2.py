@@ -8,6 +8,13 @@ import os
 import torch
 from transformers import BitsAndBytesConfig
 
+from config.constant_map import train_info_models
+
+# 可切换量化模型 ptv2 训练
+train_model_config = train_info_models['chatglm']
+# train_model_config = train_info_models['chatglm-6b-int4']
+# train_model_config = train_info_models['chatglm-6b-int8']
+
 global_args = {
     "load_in_8bit": False,  # lora 如果显卡支持int8 可以开启
     "load_in_4bit": False,
@@ -21,26 +28,13 @@ global_args = {
     "num_layers": -1, # 是否使用骨干网络的全部层数 最大1-28， -1 表示全层, 否则只用只用N层
 }
 
-if global_args['load_in_4bit'] != True:
-    global_args['quantization_config'] = None
-
 
 train_info_args = {
     'devices': 1,
     'data_backend': 'record',
     'model_type': 'chatglm',
-    # 预训练模型路径 , 从0训练，则置空
-    'model_name_or_path': '/data/nlp/pre_models/torch/chatglm/chatglm-6b',
-    'config_name': '/data/nlp/pre_models/torch/chatglm/chatglm-6b/config.json',
-    'tokenizer_name': '/data/nlp/pre_models/torch/chatglm/chatglm-6b',
-
-    # 'model_name_or_path': '/data/nlp/pre_models/torch/chatglm/chatglm-6b-int4',
-    # 'config_name': '/data/nlp/pre_models/torch/chatglm/chatglm-6b-int4/config.json',
-    # 'tokenizer_name': '/data/nlp/pre_models/torch/chatglm/chatglm-6b-int4',
-
-    # 'model_name_or_path': '/data/nlp/pre_models/torch/chatglm/chatglm-6b-int8',
-    # 'config_name': '/data/nlp/pre_models/torch/chatglm/chatglm-6b-int8/config.json',
-    # 'tokenizer_name': '/data/nlp/pre_models/torch/chatglm/chatglm-6b-int8',
+     # 预训练模型路径
+    **train_model_config,
 
     'convert_onnx': False, # 转换onnx模型
     'do_train': True,
@@ -89,18 +83,6 @@ train_info_args = {
     'max_seq_length':  512, #
     'max_target_length': 100,  # 预测最大长度, 保留字段
     'use_fast_tokenizer': False,
-    
-
-
 
 }
 
-
-
-
-
-#配置检查
-
-
-if global_args['load_in_8bit'] == global_args['load_in_4bit'] and global_args['load_in_8bit'] == True:
-    raise Exception('load_in_8bit and load_in_4bit only set one at same time!')
