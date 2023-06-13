@@ -36,7 +36,6 @@ if __name__ == '__main__':
     tokenizer, config, _, _ = dataHelper.load_tokenizer_and_config(tokenizer_class_name=ChatGLMTokenizer,
                                                                    config_class_name=ChatGLMConfig,
                                                                    config_kwargs=config_kwargs)
-    config.save_pretrained(output_weight_dir)
     assert tokenizer.eos_token_id == 130005
     if config.quantization_bit != 0 and not config.pre_seq_len:
         raise AssertionError("quantization only support ptv2 finetuning")
@@ -140,7 +139,10 @@ if __name__ == '__main__':
                                 quantization_config=global_args["quantization_config"],
                                 load_in_8bit=global_args["load_in_8bit"],
                                 device_map={"": trainer.local_rank} if trainer.world_size > 1 else "auto",
-                                torch_dtype=torch.float16, )
+                                torch_dtype=torch.float16,
+                                new_num_tokens=len(tokenizer),  # 可能扩充词 , 还有一些隐藏token, 如果不需要可自行注释
+                                )
+    config.save_pretrained(output_weight_dir)
 
     # 恢复权重继续训练
     # pl_model.load_sft_weight('./best_ckpt/best.pt',is_trainable=True)
