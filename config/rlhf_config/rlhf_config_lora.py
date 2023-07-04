@@ -46,6 +46,8 @@ lora_info_args = {
     'fan_in_fan_out': False,
     'bias': 'none',  # Bias type for Lora. Can be 'none', 'all' or 'lora_only'"
     'modules_to_save' : ['score'],
+    'layers_to_transform': None,
+    'layers_pattern': None,
 }
 
 adalora_info_args = {
@@ -58,6 +60,8 @@ adalora_info_args = {
     'fan_in_fan_out': False,
     'bias': 'none',  # Bias type for Lora. Can be 'none', 'all' or 'lora_only'"
     'modules_to_save' : ['score'],
+    'layers_to_transform': None,
+    'layers_pattern': None,
 
     'target_r':8, # Target Lora matrix dimension.
     'init_r': 12, #Intial Lora matrix dimension.

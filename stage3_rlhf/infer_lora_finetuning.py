@@ -8,7 +8,8 @@ import torch
 from deep_training.data_helper import ModelArguments, TrainingArguments, DataArguments
 from transformers import HfArgumentParser,PreTrainedTokenizer
 from data_utils import train_info_args, NN_DataHelper
-from models import MyPPOTransformer,LoraArguments,PPOArguments,ChatGLMTokenizer,ChatGLMConfig
+from aigc_zoo.model_zoo.chatglm.ppo_model import MyPPOTransformer,LoraArguments,LoraConfig,PPOArguments,PPOConfig
+from aigc_zoo.model_zoo.chatglm.llm_model import ChatGLMTokenizer,ChatGLMConfig
 from config.rlhf_config import global_args
 
 if __name__ == '__main__':

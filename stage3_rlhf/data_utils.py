@@ -15,7 +15,8 @@ from deep_training.data_helper import DataHelper, ModelArguments, TrainingArgume
 from fastdatasets.record import load_dataset as Loader, RECORD, WriterObject, gfile
 from transformers import PreTrainedTokenizer, HfArgumentParser
 from data_processer import CorpusPreprocess, TokenIds
-from models import LoraArguments,LoraConfig,PPOArguments,PPOConfig,ChatGLMTokenizer,ChatGLMConfig
+from aigc_zoo.model_zoo.chatglm.ppo_model import LoraArguments,LoraConfig,PPOArguments,PPOConfig
+from aigc_zoo.model_zoo.chatglm.llm_model import ChatGLMTokenizer,ChatGLMConfig
 from config.rlhf_config import *
 
 
@@ -94,6 +95,19 @@ class NN_DataHelper(DataHelper):
             o[k] = o_pad[k]
         return o
 
+    def make_dataset_all(self):
+        data_args = self.data_args
+
+        # schema for arrow parquet
+        schema = None
+        # 缓存数据集
+        if data_args.do_train:
+            self.make_dataset_with_args(data_args.train_file, mixed_data=False, shuffle=True, mode='train',
+                                        schema=schema)
+        if data_args.do_eval:
+            self.make_dataset_with_args(data_args.eval_file, mode='eval', schema=schema)
+        if data_args.do_test:
+            self.make_dataset_with_args(data_args.test_file, mode='test', schema=schema)
 
 if __name__ == '__main__':
     parser = HfArgumentParser((ModelArguments, TrainingArguments, DataArguments, LoraArguments,PPOArguments))
@@ -107,13 +121,7 @@ if __name__ == '__main__':
     assert tokenizer.eos_token_id == 130005
 
     # 缓存数据集
-    # 检测是否存在 output/dataset_0-train.record ，不存在则制作数据集
-    if data_args.do_train:
-        dataHelper.make_dataset_with_args(data_args.train_file,mixed_data=False,shuffle=True,mode='train')
-    if data_args.do_eval:
-        dataHelper.make_dataset_with_args(data_args.eval_file, shuffle=False,mode='eval')
-    if data_args.do_test:
-        dataHelper.make_dataset_with_args(data_args.test_file, shuffle=False,mode='test')
+    dataHelper.make_dataset_all()
 
 
     # def shuffle_records(record_filenames, outfile, compression_type='GZIP'):

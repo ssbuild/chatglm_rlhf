@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 # @Time:  11:30
 # @Author: tk
-
+from deep_training.data_helper import ModelArguments, DataArguments
+from transformers import HfArgumentParser
 from config import reward_config
-from models.reward_model import *
-from models.ppo_model import *
-from deep_training.nlp.models.chatglm import ChatGLMConfig
-from models.tokenization_chatglm import ChatGLMTokenizer
+from aigc_zoo.model_zoo.chatglm.reward_model import MyRewardTransformer
+from aigc_zoo.model_zoo.chatglm.ppo_model import MyPPOTransformer,LoraArguments,LoraConfig,PPOArguments,PPOConfig
+from aigc_zoo.model_zoo.chatglm.llm_model import ChatGLMTokenizer,ChatGLMConfig
 
 
 def load_reward_model(sft_model_dir,sft_weight_path=None) ->MyRewardTransformer:

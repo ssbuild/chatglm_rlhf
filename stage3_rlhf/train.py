@@ -13,10 +13,11 @@ from deep_training.trainer.pl.modelcheckpoint import FabricModelCheckpoint
 from lightning.fabric.strategies import DeepSpeedStrategy
 from transformers import HfArgumentParser
 from data_utils import NN_DataHelper, train_info_args, get_deepspeed_config
-from models import MyPPOTransformer, LoraArguments, LoraConfig, PPOArguments, PPOConfig, load_reward_model, \
-    load_ref_model,ChatGLMTokenizer,ChatGLMConfig
+from aigc_zoo.model_zoo.chatglm.ppo_model import MyPPOTransformer, LoraArguments, LoraConfig, PPOArguments, PPOConfig
+from aigc_zoo.model_zoo.chatglm.llm_model import ChatGLMTokenizer,ChatGLMConfig
 from deep_training.nlp.rl.ppo.ppo_trainer import PPOTrainer
 from config.rlhf_config import global_args
+from reward_weight import load_reward_model, load_ref_model
 
 
 
@@ -49,13 +50,7 @@ if __name__ == '__main__':
     assert config.quantization_bit == 0, ValueError('量化权重不支持ppo training')
 
 
-    # 缓存数据集
-    if data_args.do_train:
-        dataHelper.make_dataset_with_args(data_args.train_file, mixed_data=False, shuffle=True, mode='train')
-    if data_args.do_eval:
-        dataHelper.make_dataset_with_args(data_args.eval_file, mode='eval')
-    if data_args.do_test:
-        dataHelper.make_dataset_with_args(data_args.test_file, mode='test')
+    dataHelper.make_dataset_all()
 
     deepspeed_config = get_deepspeed_config()
     strategy = 'ddp' if torch.cuda.device_count() >= 1 else 'auto'
