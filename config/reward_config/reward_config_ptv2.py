@@ -16,8 +16,7 @@ train_model_config = train_info_models['chatglm']
 # train_model_config = train_info_models['chatglm-6b-int8']
 
 global_args = {
-    "load_in_8bit": False,  # lora 如果显卡支持int8 可以开启
-    "load_in_4bit": False,
+
 
     # load_in_4bit 量化配置
     "quantization_config": None,

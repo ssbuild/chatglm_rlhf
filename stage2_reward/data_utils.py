@@ -12,7 +12,7 @@ import typing
 import numpy as np
 import torch
 from deep_training.data_helper import DataHelper, ModelArguments, TrainingArguments, DataArguments
-from models import LoraArguments,LoraConfig,ChatGLMTokenizer,ChatGLMConfig
+from models import PetlArguments,LoraConfig,ChatGLMTokenizer,ChatGLMConfig
 from fastdatasets.record import load_dataset as Loader, RECORD, WriterObject, gfile
 from transformers import PreTrainedTokenizer, HfArgumentParser
 from data_processer import CorpusPreprocess, TokenIds
@@ -129,7 +129,7 @@ class NN_DataHelper(DataHelper):
 
 
 if __name__ == '__main__':
-    parser = HfArgumentParser((ModelArguments, TrainingArguments, DataArguments, LoraArguments))
+    parser = HfArgumentParser((ModelArguments, TrainingArguments, DataArguments, PetlArguments))
     model_args, training_args, data_args, lora_args = parser.parse_dict(train_info_args)
     lora_args = lora_args.config
 

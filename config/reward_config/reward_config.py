@@ -13,8 +13,7 @@ from config.constant_map import train_info_models
 train_model_config = train_info_models['chatglm']
 
 global_args = {
-    "load_in_8bit": False, # qlora int8
-    "load_in_4bit": False, # qlora int4
+    
 
     # load_in_4bit 量化配置
     "quantization_config": None,

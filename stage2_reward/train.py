@@ -6,7 +6,7 @@ sys.path.append('..')
 
 import torch
 from deep_training.data_helper import ModelArguments, DataArguments, TrainingArguments
-from deep_training.nlp.models.lora.v2 import LoraArguments, LoraConfig
+from deep_training.nlp.models.lora.v2 import PetlArguments, LoraConfig
 from deep_training.trainer.pl.modelcheckpoint import ModelCheckpointEx
 from lightning import Trainer
 from lightning.pytorch.callbacks import LearningRateMonitor
@@ -19,7 +19,7 @@ from config.reward_config import global_args
 
 
 if __name__ == '__main__':
-    parser = HfArgumentParser((ModelArguments, TrainingArguments, DataArguments, LoraArguments))
+    parser = HfArgumentParser((ModelArguments, TrainingArguments, DataArguments, PetlArguments))
     model_args, training_args, data_args, lora_args = parser.parse_dict(train_info_args)
     lora_args = lora_args.config
 
@@ -63,7 +63,15 @@ if __name__ == '__main__':
         lora_args=lora_args,
     )
 
+    is_bf16_supported = torch.cuda.is_bf16_supported()
+    # 精度 根据实际情况做调整
+    if is_bf16_supported:
+        precision = 'bf16'
+    else:
+        precision = '16'
 
+    if global_args["quantization_config"] is not None and global_args["quantization_config"].load_in_8bit:
+        precision = "32"
     trainer = Trainer(
         callbacks=[checkpoint_callback, LearningRateMonitor(logging_interval='step')],
         max_epochs=training_args.max_epochs,
@@ -76,14 +84,14 @@ if __name__ == '__main__':
         accumulate_grad_batches=training_args.gradient_accumulation_steps,
         num_sanity_val_steps=0,
         strategy=strategy,
-        precision='16',# 可以自行尝试  "32": "32-true", "16": "16-mixed", "bf16": "bf16-mixed"
+        precision=precision,# 可以自行尝试  "32": "32-true", "16": "16-mixed", "bf16": "bf16-mixed"
     )
 
 
 
     pl_model = MyRewardTransformer(config=config, model_args=model_args, training_args=training_args, lora_args=lora_args,
                                    quantization_config=global_args["quantization_config"],
-                                   load_in_8bit=global_args["load_in_8bit"],
+
                                    device_map={"": trainer.local_rank} if trainer.world_size > 1 else "auto",
                                    torch_dtype=torch.float16,
                                    new_num_tokens=len(tokenizer),   # 可能扩充词 , 还有一些隐藏token, 如果不需要可自行注释
@@ -99,7 +107,7 @@ if __name__ == '__main__':
         pl_model.get_llm_model().transformer.prefix_encoder.float()
     else:
         # Finetune
-        pl_model = pl_model.float()
+        pl_model = pl_model.float() if not is_bf16_supported else pl_model.bfloat16()
 
 
     def dataset_loader_filter_fn(dataset):

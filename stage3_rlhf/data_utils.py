@@ -15,7 +15,7 @@ from deep_training.data_helper import DataHelper, ModelArguments, TrainingArgume
 from fastdatasets.record import load_dataset as Loader, RECORD, WriterObject, gfile
 from transformers import PreTrainedTokenizer, HfArgumentParser
 from data_processer import CorpusPreprocess, TokenIds
-from aigc_zoo.model_zoo.chatglm.ppo_model import LoraArguments,LoraConfig,PPOArguments,PPOConfig
+from aigc_zoo.model_zoo.chatglm.ppo_model import PetlArguments,LoraConfig,PPOArguments,PPOConfig
 from aigc_zoo.model_zoo.chatglm.llm_model import ChatGLMTokenizer,ChatGLMConfig
 from config.rlhf_config import *
 
@@ -110,7 +110,7 @@ class NN_DataHelper(DataHelper):
             self.make_dataset_with_args(data_args.test_file, mode='test', schema=schema)
 
 if __name__ == '__main__':
-    parser = HfArgumentParser((ModelArguments, TrainingArguments, DataArguments, LoraArguments,PPOArguments))
+    parser = HfArgumentParser((ModelArguments, TrainingArguments, DataArguments, PetlArguments,PPOArguments))
     model_args, training_args, data_args, lora_args,ppo_args = parser.parse_dict(train_info_args)
     lora_args = lora_args.config
     ppo_args = ppo_args.config

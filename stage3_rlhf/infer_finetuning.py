@@ -10,7 +10,7 @@ from transformers import HfArgumentParser,PreTrainedTokenizer
 
 from config.rlhf_config import get_deepspeed_config
 from data_utils import train_info_args, NN_DataHelper
-from aigc_zoo.model_zoo.chatglm.ppo_model import MyPPOTransformer,LoraArguments,LoraConfig,PPOArguments,PPOConfig
+from aigc_zoo.model_zoo.chatglm.ppo_model import MyPPOTransformer,PetlArguments,LoraConfig,PPOArguments,PPOConfig
 from aigc_zoo.model_zoo.chatglm.llm_model import ChatGLMTokenizer,ChatGLMConfig
 
 

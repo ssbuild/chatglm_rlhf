@@ -8,7 +8,7 @@ import torch
 from deep_training.data_helper import ModelArguments, TrainingArguments, DataArguments
 from transformers import HfArgumentParser,PreTrainedTokenizer
 from data_utils import train_info_args, NN_DataHelper
-from aigc_zoo.model_zoo.chatglm.ppo_model import MyPPOTransformer,LoraArguments,LoraConfig,PPOArguments,PPOConfig
+from aigc_zoo.model_zoo.chatglm.ppo_model import MyPPOTransformer,PetlArguments,LoraConfig,PPOArguments,PPOConfig
 from aigc_zoo.model_zoo.chatglm.llm_model import ChatGLMTokenizer,ChatGLMConfig
 from config.rlhf_config import global_args
 
@@ -24,7 +24,7 @@ if __name__ == '__main__':
 
     ckpt_dir = './best_ckpt'
     config = ChatGLMConfig.from_pretrained(ckpt_dir)
-    lora_args = LoraArguments.from_pretrained(ckpt_dir)
+    lora_args = PetlArguments.from_pretrained(ckpt_dir)
 
     assert lora_args.inference_mode == True
 
@@ -35,7 +35,7 @@ if __name__ == '__main__':
     pl_model = MyPPOTransformer(config=config, model_args=model_args, lora_args=lora_args,
                                 torch_dtype=config.torch_dtype,
                                 new_num_tokens=new_num_tokens,
-                                # load_in_8bit=global_args["load_in_8bit"],
+                                
                                 # # device_map="auto",
                                 # device_map = {"":0} # 第一块卡
                                 )
