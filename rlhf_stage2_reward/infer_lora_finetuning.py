@@ -10,16 +10,17 @@ from deep_training.data_helper import ModelArguments, DataArguments
 from transformers import HfArgumentParser,PreTrainedTokenizer
 
 from data_utils import train_info_args, NN_DataHelper
-from models import MyRewardTransformer,PetlArguments,ChatGLMConfig,ChatGLMTokenizer
-from config.reward_config import global_args
+from aigc_zoo.model_zoo.chatglm.reward_model import MyRewardTransformer ,PetlArguments
+from aigc_zoo.model_zoo.chatglm.llm_model import ChatGLMConfig,ChatGLMTokenizer
+
 
 if __name__ == '__main__':
     train_info_args['seed'] = None
-    parser = HfArgumentParser((ModelArguments, DataArguments))
-    model_args, data_args = parser.parse_dict(train_info_args,allow_extra_keys=True)
+    parser = HfArgumentParser((ModelArguments,))
+    (model_args, ) = parser.parse_dict(train_info_args,allow_extra_keys=True)
 
     tokenizer : PreTrainedTokenizer
-    dataHelper = NN_DataHelper(model_args, None, data_args)
+    dataHelper = NN_DataHelper(model_args)
     tokenizer, _, _, _ = dataHelper.load_tokenizer_and_config(tokenizer_class_name=ChatGLMTokenizer,
                                                               config_class_name=ChatGLMConfig)
 
